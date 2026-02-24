@@ -3,239 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembaca PDF dengan Memori</title>
-    <!-- Tailwind CSS untuk Styling -->
+    <title>PDF Reader Minimalis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- Phosphor Icons untuk Ikon -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        /* Mencegah highlight biru saat klik tombol di mobile */
-        button { -webkit-tap-highlight-color: transparent; }
-        #canvas-container {
-            min-height: 60vh;
-            max-height: 75vh;
-            overflow: auto;
-        }
-        /* Tambahan untuk memastikan canvas responsif di perangkat mobile */
-        #pdf-canvas {
-            max-width: 100%;
-            height: auto !important;
-        }
-    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans p-4 md:p-8">
+<body class="bg-gray-100 p-4 font-sans text-gray-800">
 
-    <div class="max-w-4xl mx-auto space-y-6">
-        
-        <!-- Header -->
-        <div class="text-center">
-            <h1 class="text-3xl font-bold text-blue-700 flex items-center justify-center gap-2">
-                <i class="ph ph-book-open-text text-4xl"></i> Pembaca PDF Pintar
-            </h1>
-            <p class="text-gray-500 mt-2">Mengingat lokasi halaman terakhir yang Anda baca.</p>
+    <div class="max-w-3xl mx-auto flex flex-col gap-4">
+        <!-- Input & Tombol -->
+        <div class="flex gap-2">
+            <input type="text" id="url" placeholder="Paste link PDF / Google Drive di sini..." class="flex-1 p-2 border rounded">
+            <button id="load" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Buka</button>
         </div>
 
-        <!-- Panel Input -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div>
-                <label class="block text-sm font-semibold mb-2">Link PDF (Langsung atau Google Drive)</label>
-                <input type="text" id="file-url" placeholder="Contoh: https://drive.google.com/file/d/1ewNh.../view" 
-                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm md:text-base">
-            </div>
-            <div class="mt-4 flex justify-end">
-                <button id="load-btn" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i class="ph ph-folder-open"></i> Buka Dokumen
-                </button>
-            </div>
+        <!-- Navigasi Halaman -->
+        <div class="flex justify-between items-center bg-white p-2 border rounded">
+            <button id="prev" class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300"><</button>
+            <span>Halaman <b id="page-num">0</b> / <span id="page-count">0</span></span>
+            <button id="next" class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300">></button>
         </div>
 
-        <!-- Panel Viewer -->
-        <div id="viewer-panel" class="bg-white rounded-2xl shadow-sm border border-gray-200 hidden overflow-hidden">
-            
-            <!-- Toolbar Atas -->
-            <div class="bg-gray-50 border-b border-gray-200 p-3 md:p-4 flex flex-wrap justify-between items-center gap-3">
-                <div class="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-between md:justify-start">
-                    <button id="prev-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
-                        <i class="ph ph-caret-left text-lg"></i>
-                    </button>
-                    <span class="font-medium text-sm md:text-base whitespace-nowrap">
-                        Halaman <span id="page-num" class="font-bold text-blue-600">0</span> dari <span id="page-count">0</span>
-                    </span>
-                    <button id="next-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
-                        <i class="ph ph-caret-right text-lg"></i>
-                    </button>
-                </div>
-                <div class="w-full md:w-auto text-center md:text-right">
-                    <span id="save-status" class="text-xs md:text-sm text-green-600 font-medium opacity-0 transition-opacity duration-300 flex items-center justify-center md:justify-end gap-1">
-                        <i class="ph ph-check-circle"></i> Posisi Tersimpan
-                    </span>
-                </div>
-            </div>
-
-            <!-- Area Canvas PDF -->
-            <div id="canvas-container" class="bg-gray-200 flex justify-center p-2 md:p-4 relative">
-                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-80 z-10 hidden">
-                    <div class="flex flex-col items-center gap-2">
-                        <i class="ph ph-spinner-gap animate-spin text-4xl text-blue-600"></i>
-                        <span class="font-medium text-gray-700 text-sm md:text-base">Memuat Dokumen...</span>
-                    </div>
-                </div>
-                <canvas id="pdf-canvas" class="shadow-lg bg-white max-w-full"></canvas>
-            </div>
+        <!-- Canvas PDF -->
+        <div class="flex justify-center bg-gray-300 overflow-auto border rounded items-start p-2">
+            <canvas id="pdf-canvas" class="bg-white max-w-full h-auto object-contain shadow"></canvas>
         </div>
-
     </div>
 
     <script>
-        // Setup Web Worker PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Variabel State Aplikasi
-        const state = {
-            pdfDoc: null,
-            pageNum: 1,
-            pageRendering: false,
-            pageNumPending: null,
-            url: ''
-        };
-
+        // State sederhana
+        let pdfDoc = null, pageNum = 1, currentUrl = '';
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
-        const viewerPanel = document.getElementById('viewer-panel');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const saveStatus = document.getElementById('save-status');
+        const apiKey = "AIzaSyDZkBrgKtAhgkJFGNsEoITyYxiG_syu0xU";
 
-        // 1. Memuat state saat halaman dibuka
-        window.onload = function() {
-            const savedData = localStorage.getItem('smartPdfReaderState');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                document.getElementById('file-url').value = parsed.url || '';
-                
-                if (parsed.url) {
-                    state.pageNum = parsed.page || 1;
-                    loadDocument(parsed.url, state.pageNum);
-                }
+        // 1. Auto-load saat web dibuka
+        window.onload = () => {
+            const saved = JSON.parse(localStorage.getItem('pdfMemori') || '{}');
+            if (saved.url) {
+                document.getElementById('url').value = saved.url;
+                loadPDF(saved.url, saved.page || 1);
             }
         };
 
-        // 2. Fungsi Menyimpan Posisi ke Memori
-        function saveState() {
-            if(!state.url) return;
-            localStorage.setItem('smartPdfReaderState', JSON.stringify({
-                url: state.url,
-                page: state.pageNum
-            }));
+        // 2. Fungsi Utama Muat PDF
+        async function loadPDF(url, startPage = 1) {
+            currentUrl = url;
+            let fetchUrl = url;
 
-            saveStatus.classList.remove('opacity-0');
-            setTimeout(() => saveStatus.classList.add('opacity-0'), 2000);
-        }
+            // Jika link GDrive, ubah pakai API Key
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match) fetchUrl = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media&key=${apiKey}`;
 
-        // 3. Logika Memuat Dokumen
-        async function loadDocument(inputUrl, startPage = 1) {
-            if (!inputUrl) return alert("Masukkan link PDF terlebih dahulu!");
-
-            state.url = inputUrl;
-            let fetchUrl = inputUrl;
-
-            // Jika link dari Google Drive, gunakan API Key yang di-hardcode
-            const gdriveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
-            const match = inputUrl.match(gdriveRegex);
+            // Tarik dokumen
+            pdfDoc = await pdfjsLib.getDocument(fetchUrl).promise;
+            document.getElementById('page-count').innerText = pdfDoc.numPages;
             
-            if (match) {
-                const fileId = match[1];
-                
-                // ==========================================
-                // MASUKKAN API KEY GOOGLE CLOUD ANDA DI SINI
-                // ==========================================
-                const apiKey = "AIzaSyDZkBrgKtAhgkJFGNsEoITyYxiG_syu0xU";
-
-                // Mengambil file langsung ke Google Drive API dengan API key hardcode
-                fetchUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-            }
-
-            viewerPanel.classList.remove('hidden');
-            loadingIndicator.classList.remove('hidden');
-
-            try {
-                const loadingTask = pdfjsLib.getDocument(fetchUrl);
-                state.pdfDoc = await loadingTask.promise;
-                
-                document.getElementById('page-count').textContent = state.pdfDoc.numPages;
-                
-                if (startPage > state.pdfDoc.numPages) startPage = state.pdfDoc.numPages;
-                state.pageNum = startPage;
-                
-                renderPage(state.pageNum);
-                loadingIndicator.classList.add('hidden');
-            } catch (error) {
-                console.error(error);
-                loadingIndicator.classList.add('hidden');
-                viewerPanel.classList.add('hidden');
-                alert("Gagal memuat PDF.\nPastikan link benar dan file Google Drive bersifat Publik.");
-            }
+            pageNum = Math.min(startPage, pdfDoc.numPages);
+            renderPage(pageNum);
         }
 
-        // 4. Merender Halaman
-        function renderPage(num) {
-            state.pageRendering = true;
+        // 3. Fungsi Gambar Halaman
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({scale: 1.5}); // 1.5x agar cukup tajam
             
-            state.pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({scale: 2.0}); 
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            await page.render({canvasContext: ctx, viewport: viewport}).promise;
 
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-                
-                page.render(renderContext).promise.then(function() {
-                    state.pageRendering = false;
-                    if (state.pageNumPending !== null) {
-                        renderPage(state.pageNumPending);
-                        state.pageNumPending = null;
-                    }
-                });
-            });
-
-            document.getElementById('page-num').textContent = num;
-            document.getElementById('prev-btn').disabled = num <= 1;
-            document.getElementById('next-btn').disabled = num >= state.pdfDoc.numPages;
-
-            saveState();
+            // Update UI & Simpan ke memori
+            document.getElementById('page-num').innerText = num;
+            localStorage.setItem('pdfMemori', JSON.stringify({url: currentUrl, page: num}));
         }
 
-        function queueRenderPage(num) {
-            if (state.pageRendering) {
-                state.pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        // 5. Event Listeners
-        document.getElementById('prev-btn').addEventListener('click', () => {
-            if (state.pageNum <= 1) return;
-            state.pageNum--;
-            queueRenderPage(state.pageNum);
-        });
-
-        document.getElementById('next-btn').addEventListener('click', () => {
-            if (state.pageNum >= state.pdfDoc.numPages) return;
-            state.pageNum++;
-            queueRenderPage(state.pageNum);
-        });
-
-        document.getElementById('load-btn').addEventListener('click', () => {
-            const inputUrl = document.getElementById('file-url').value;
-            if (inputUrl !== state.url) {
-                state.pageNum = 1;
-            }
-            loadDocument(inputUrl, state.pageNum);
-        });
+        // 4. Aksi Tombol
+        document.getElementById('load').onclick = () => {
+            const input = document.getElementById('url').value;
+            loadPDF(input, input === currentUrl ? pageNum : 1);
+        };
+        
+        document.getElementById('prev').onclick = () => {
+            if (pageNum > 1) renderPage(--pageNum);
+        };
+        
+        document.getElementById('next').onclick = () => {
+            if (pageNum < pdfDoc.numPages) renderPage(++pageNum);
+        };
     </script>
 </body>
 </html>
