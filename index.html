@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembaca PDF Tersuai - Sambung Baca</title>
+    <title>Pembaca PDF Kustom - Sambung Baca</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
@@ -26,36 +26,41 @@
 <body class="text-gray-800 font-sans p-4 md:p-8 max-w-5xl mx-auto">
 
     <div class="bg-white p-6 rounded-xl shadow-md mb-6">
-        <h1 class="text-2xl font-bold mb-2 text-blue-600">Aplikasi Pembaca PDF Tersuai</h1>
-        <p class="text-sm text-gray-600 mb-4">Aplikasi ini akan membaca PDF terus dari Google Drive dan secara automatik menyimpan halaman terakhir yang anda baca dalam memori pelayar.</p>
+        <h1 class="text-2xl font-bold mb-2 text-blue-600">Aplikasi Pembaca PDF Kustom</h1>
+        <p class="text-sm text-gray-600 mb-4">Aplikasi ini akan membaca PDF langsung dari Google Drive. Anda dapat membagikan link ke halaman tertentu, dan ia juga akan otomatis mengingat halaman terakhir yang Anda baca.</p>
         
         <div class="flex flex-col md:flex-row gap-3">
-            <input type="text" id="file-id" placeholder="Masukkan ID Fail Google Drive" 
+            <input type="text" id="file-id" placeholder="Masukkan ID File Google Drive" 
                 value="1ewNhvYGoxFjso9puvNEKWY0a41lAOUaZ"
                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button id="load-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
                 Muat Buku
             </button>
         </div>
-        <p class="text-xs text-gray-500 mt-2">Pastikan fail Google Drive anda telah ditetapkan aksesnya kepada "Sesiapa sahaja yang mempunyai pautan" (Anyone with the link).</p>
+        <p class="text-xs text-gray-500 mt-2">Pastikan file Google Drive Anda telah diatur aksesnya ke "Siapa saja yang memiliki link" (Anyone with the link).</p>
     </div>
 
     <div id="pdf-viewer" class="bg-white p-6 rounded-xl shadow-md hidden">
-        <div class="flex justify-between items-center mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <div class="flex flex-wrap gap-2 justify-between items-center mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
             <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium transition">
                 &larr; Sebelumnya
             </button>
-            <span class="font-semibold text-gray-700">
-                Halaman: <span id="page-num" class="text-blue-600"></span> / <span id="page-count"></span>
-            </span>
+            <div class="flex items-center gap-3">
+                <span class="font-semibold text-gray-700">
+                    Halaman: <span id="page-num" class="text-blue-600"></span> / <span id="page-count"></span>
+                </span>
+                <button id="copy-link-btn" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded text-sm font-medium transition" title="Salin tautan untuk menuju langsung ke halaman ini">
+                    📋 Salin Tautan
+                </button>
+            </div>
             <button id="next-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium transition">
-                Seterusnya &rarr;
+                Selanjutnya &rarr;
             </button>
         </div>
 
         <div id="loading-indicator" class="text-center py-10 hidden">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-            <p class="text-gray-500">Memuatkan dokumen dari Google Drive...</p>
+            <p class="text-gray-500">Memuat dokumen dari Google Drive...</p>
         </div>
 
         <div id="canvas-container">
@@ -64,7 +69,7 @@
     </div>
 
     <script>
-        // Konfigurasi Pekerja PDF.js
+        // Konfigurasi Worker PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         let pdfDoc = null,
@@ -81,7 +86,7 @@
         const renderPage = num => {
             pageIsRendering = true;
 
-            // Dapatkan halaman daripada dokumen
+            // Dapatkan halaman dari dokumen
             pdfDoc.getPage(num).then(page => {
                 const viewport = page.getViewport({ scale });
                 canvas.height = viewport.height;
@@ -101,15 +106,21 @@
                     }
                 });
 
-                // Kemas kini teks halaman
+                // Perbarui teks halaman
                 document.querySelector('#page-num').textContent = num;
                 
-                // SIMPAN KE DALAM STORAN TEMPATAN (LOCAL STORAGE)
+                // SIMPAN KE DALAM LOCAL STORAGE
                 localStorage.setItem(`pdf_page_${currentFileId}`, num);
+                
+                // Perbarui URL secara diam-diam tanpa me-refresh halaman agar bisa langsung di-copy dari address bar
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('id', currentFileId);
+                newUrl.searchParams.set('page', num);
+                window.history.replaceState({}, '', newUrl);
             });
         };
 
-        // Semak halaman yang tertangguh
+        // Cek halaman yang tertunda
         const queueRenderPage = num => {
             if (pageIsRendering) {
                 pageNumIsPending = num;
@@ -125,7 +136,7 @@
             queueRenderPage(pageNum);
         };
 
-        // Halaman Seterusnya
+        // Halaman Selanjutnya
         const showNextPage = () => {
             if (pageNum >= pdfDoc.numPages) return;
             pageNum++;
@@ -133,10 +144,10 @@
         };
 
         // Muat Dokumen PDF
-        const loadPDF = () => {
+        const loadPDF = (requestedPage = null) => {
             const fileId = document.querySelector('#file-id').value.trim();
             if (!fileId) {
-                alert('Sila masukkan ID Fail Google Drive!');
+                alert('Silakan masukkan ID File Google Drive!');
                 return;
             }
 
@@ -145,19 +156,24 @@
             document.querySelector('#loading-indicator').classList.remove('hidden');
             document.querySelector('#canvas-container').classList.add('hidden');
 
-            // Semak jika ada halaman tersimpan dalam memori pelayar
-            const savedPage = localStorage.getItem(`pdf_page_${currentFileId}`);
-            if (savedPage) {
-                pageNum = parseInt(savedPage, 10);
-                console.log(`Memori halaman ditemui! Melompat ke halaman: ${pageNum}`);
+            // Logika Penentuan Halaman (URL -> LocalStorage -> Default)
+            if (requestedPage && !isNaN(requestedPage)) {
+                pageNum = parseInt(requestedPage, 10);
+                console.log(`Melompat ke halaman dari tautan: ${pageNum}`);
             } else {
-                pageNum = 1; // Lalai
+                const savedPage = localStorage.getItem(`pdf_page_${currentFileId}`);
+                if (savedPage) {
+                    pageNum = parseInt(savedPage, 10);
+                    console.log(`Memori halaman ditemukan! Melompat ke halaman: ${pageNum}`);
+                } else {
+                    pageNum = 1; // Default
+                }
             }
 
-            // Pautan terus Google Drive
+            // Tautan langsung Google Drive
             const driveDirectUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
             
-            // Senarai proksi untuk mengelakkan ralat CORS dan sekatan 403 Google Drive
+            // Daftar proxy untuk menghindari error CORS dan blokir 403 Google Drive
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(driveDirectUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(driveDirectUrl)}`,
@@ -166,16 +182,16 @@
 
             let proxyIndex = 0;
 
-            // Fungsi untuk mencuba proksi secara berurutan
+            // Fungsi untuk mencoba proxy secara berurutan
             const fetchPDF = () => {
                 if (proxyIndex >= proxies.length) {
                     document.querySelector('#loading-indicator').classList.add('hidden');
-                    alert('Gagal memuatkan PDF dari semua pelayan proksi. Google Drive mungkin menyekat akses kerana trafik tinggi, atau fail terlalu besar (>100MB) yang memerlukan imbasan virus.');
+                    alert('Gagal memuat PDF dari semua server proxy. Google Drive mungkin memblokir akses karena lalu lintas tinggi, atau file terlalu besar (>100MB) yang memerlukan pemindaian virus.');
                     return;
                 }
 
                 const currentProxy = proxies[proxyIndex];
-                console.log(`Mencuba proksi ${proxyIndex + 1}:`, currentProxy);
+                console.log(`Mencoba proxy ke-${proxyIndex + 1}:`, currentProxy);
 
                 // Ambil Dokumen
                 pdfjsLib.getDocument(currentProxy).promise.then(pdfDoc_ => {
@@ -185,29 +201,55 @@
                     document.querySelector('#loading-indicator').classList.add('hidden');
                     document.querySelector('#canvas-container').classList.remove('hidden');
 
-                    // Pengesahan agar halaman tidak melebihi jumlah halaman buku (jika fail berubah)
+                    // Validasi agar halaman tidak melebihi jumlah halaman buku
                     if (pageNum > pdfDoc.numPages) pageNum = pdfDoc.numPages;
 
                     renderPage(pageNum);
                 }).catch(err => {
-                    console.warn(`Proksi ${proxyIndex + 1} gagal:`, err.message);
-                    proxyIndex++; // Pergi ke proksi seterusnya
-                    fetchPDF(); // Cuba lagi
+                    console.warn(`Proxy ke-${proxyIndex + 1} gagal:`, err.message);
+                    proxyIndex++; // Lanjut ke proxy berikutnya
+                    fetchPDF(); // Coba lagi
                 });
             };
 
-            // Mulakan proses pengambilan
+            // Mulai proses pengambilan
             fetchPDF();
         };
 
-        // Pendengar Acara (Event Listeners)
-        document.querySelector('#load-btn').addEventListener('click', loadPDF);
+        // Event Listeners Navigasi
+        document.querySelector('#load-btn').addEventListener('click', () => loadPDF(null));
         document.querySelector('#prev-btn').addEventListener('click', showPrevPage);
         document.querySelector('#next-btn').addEventListener('click', showNextPage);
         
-        // Muat secara automatik apabila menekan Enter pada input teks
+        // Muat otomatis saat menekan Enter pada input teks
         document.querySelector('#file-id').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') loadPDF();
+            if (e.key === 'Enter') loadPDF(null);
+        });
+
+        // Fitur Salin Tautan Khusus
+        document.querySelector('#copy-link-btn').addEventListener('click', () => {
+            const currentUrl = window.location.href;
+            const tempInput = document.createElement('input');
+            tempInput.value = currentUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            alert('Tautan URL berhasil disalin!\nAnda bisa membagikan tautan ini untuk langsung menuju ke halaman ' + pageNum);
+        });
+
+        // CEK PARAMETER URL SAAT APLIKASI PERTAMA KALI DIBUKA
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlId = urlParams.get('id');
+            const urlPage = urlParams.get('page');
+
+            if (urlId) {
+                // Jika ada ID di URL, masukkan ke input box dan otomatis muat PDF
+                document.querySelector('#file-id').value = urlId;
+                loadPDF(urlPage); 
+            }
         });
     </script>
 </body>
