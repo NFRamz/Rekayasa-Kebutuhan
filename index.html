@@ -3,138 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive PDF Viewer dengan Bookmark</title>
+    <title>Drive Image-Based Reader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body, html { height: 100%; margin: 0; overflow: hidden; }
-        #app-container { display: flex; flex-direction: column; height: 100vh; }
-        #iframe-container { flex-grow: 1; width: 100%; border: none; background-color: #f3f4f6; }
-        iframe { width: 100%; height: 100%; border: none; }
+        body { background-color: #f3f4f6; }
+        #viewer-container {
+            display: flex;
+            justify-content: center;
+            overflow: auto;
+            background-color: #e5e7eb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            min-height: 70vh;
+        }
+        #document-image {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            max-width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
     </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="text-gray-800 font-sans p-4 md:p-8 max-w-5xl mx-auto">
 
-    <div id="app-container">
-        <!-- Toolbar Atas -->
-        <div class="bg-white border-b shadow-sm p-3 flex flex-col md:flex-row items-center justify-between gap-4 z-10">
-            
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">PDF</div>
-                <div class="flex-1">
-                    <input type="text" id="file-id" placeholder="ID File Google Drive" 
-                        class="w-full md:w-64 px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value="1ewNhvYGoxFjso9puvNEKWY0a41lAOUaZ">
-                </div>
-                <button id="load-btn" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-1.5 rounded text-sm font-semibold transition">
-                    Muat
-                </button>
+    <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <h1 class="text-2xl font-bold mb-2 text-indigo-600">Pembaca PDF via Jalur Gambar</h1>
+        <p class="text-sm text-gray-600 mb-4">Aplikasi ini memanipulasi parameter <code>page=</code> pada link gambar internal Google Drive. Masukkan link panjang (viewer/img) yang Anda temukan.</p>
+        
+        <div class="flex flex-col gap-3">
+            <input type="text" id="img-link" placeholder="Paste link https://drive.google.com/viewer/img?id=..." 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+            <button id="load-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 w-full md:w-auto self-start">
+                Muat Dokumen
+            </button>
+        </div>
+    </div>
+
+    <div id="reader-workspace" class="bg-white p-6 rounded-xl shadow-md hidden">
+        
+        <!-- Papan Kontrol Navigasi -->
+        <div class="flex flex-wrap gap-2 justify-between items-center mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+            <button id="prev-btn" class="bg-indigo-200 hover:bg-indigo-300 text-indigo-800 px-4 py-2 rounded font-medium transition">
+                &larr; Halaman Sebelumnya
+            </button>
+            <div class="flex items-center gap-2">
+                <span class="font-semibold text-gray-700">Halaman: </span>
+                <input type="number" id="page-jump" min="1" class="w-16 px-2 py-1 text-center border border-gray-300 rounded font-bold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
-
-            <!-- Kontrol Halaman (Penyimpanan Manual) -->
-            <div class="flex items-center gap-3 bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-lg w-full md:w-auto">
-                <div class="text-sm">
-                    <span class="text-yellow-800 font-medium">Terakhir dibaca: Halaman</span>
-                </div>
-                <input type="number" id="page-input" placeholder="1" min="1"
-                    class="w-20 px-2 py-1 border border-gray-300 rounded text-center font-bold text-blue-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                <button id="save-btn" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1 rounded text-sm font-bold shadow-sm transition">
-                    Simpan Posisi
-                </button>
-            </div>
-
+            <button id="next-btn" class="bg-indigo-200 hover:bg-indigo-300 text-indigo-800 px-4 py-2 rounded font-medium transition">
+                Halaman Selanjutnya &rarr;
+            </button>
         </div>
 
-        <!-- Peringatan Keamanan Iframe -->
-        <div id="info-bar" class="bg-blue-50 text-blue-800 text-xs text-center py-1 border-b border-blue-100">
-            Karena aturan keamanan browser, kami tidak bisa melacak halaman di dalam Google Drive secara otomatis. <b>Harap ketik dan simpan halaman terakhir Anda di kotak kuning di atas sebelum menutup tab.</b>
+        <div id="loading-indicator" class="text-center py-10 hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
+            <p class="text-gray-500 text-sm">Mengambil gambar dari server Google...</p>
         </div>
 
-        <!-- Area Tampilan Google Drive -->
-        <div id="iframe-container">
-            <iframe id="drive-iframe" allow="autoplay" title="Google Drive Viewer"></iframe>
+        <!-- Area Gambar Dokumen -->
+        <div id="viewer-container">
+            <img id="document-image" src="" alt="Halaman Dokumen" class="hidden">
+            <div id="error-msg" class="hidden text-red-500 font-medium py-10 text-center">
+                Gagal memuat gambar. Token link mungkin sudah kedaluwarsa. Silakan ambil link gambar yang baru dari Google Drive.
+            </div>
         </div>
     </div>
 
     <script>
-        const fileIdInput = document.getElementById('file-id');
-        const pageInput = document.getElementById('page-input');
-        const loadBtn = document.getElementById('load-btn');
-        const saveBtn = document.getElementById('save-btn');
-        const driveIframe = document.getElementById('drive-iframe');
-        const infoBar = document.getElementById('info-bar');
+        let currentFileToken = "";
+        let currentPage = 1;
+        let originalUrlObj = null;
 
-        // Fungsi untuk memuat Iframe Google Drive
-        function loadDriveViewer() {
-            const fileId = fileIdInput.value.trim();
-            if (!fileId) return;
+        const imgLinkInput = document.getElementById('img-link');
+        const documentImage = document.getElementById('document-image');
+        const pageJumpInput = document.getElementById('page-jump');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMsg = document.getElementById('error-msg');
 
-            // Memuat file dari LocalStorage jika ada
-            const savedPage = localStorage.getItem(`bookmark_drive_${fileId}`);
-            
-            if (savedPage) {
-                pageInput.value = savedPage;
-                // Meskipun Google Drive jarang merespon parameter #page= pada iframe preview,
-                // kita tetap menyertakannya sebagai standar.
-                driveIframe.src = `https://drive.google.com/file/d/${fileId}/preview#page=${savedPage}`;
+        function initReader() {
+            const rawLink = imgLinkInput.value.trim();
+            if (!rawLink || !rawLink.includes('viewer/img')) {
+                alert("Harap masukkan link gambar yang valid (dimulai dengan https://drive.google.com/viewer/img...)");
+                return;
+            }
+
+            try {
+                originalUrlObj = new URL(rawLink);
+                // Ekstrak Token ID unik (ACFrOg...) sebagai kunci penyimpanan
+                currentFileToken = originalUrlObj.searchParams.get('id'); 
                 
-                // Ubah info bar untuk memberitahu pengguna
-                infoBar.innerHTML = `File dimuat! Anda terakhir berada di <b>Halaman ${savedPage}</b>. Silakan scroll ke halaman tersebut.`;
-                infoBar.className = "bg-green-50 text-green-800 text-xs text-center py-1 border-b border-green-100";
-            } else {
-                pageInput.value = '';
-                driveIframe.src = `https://drive.google.com/file/d/${fileId}/preview`;
-                infoBar.innerHTML = `Karena aturan keamanan browser, harap ketik dan simpan halaman terakhir Anda di kotak kuning sebelum menutup tab.`;
-                infoBar.className = "bg-blue-50 text-blue-800 text-xs text-center py-1 border-b border-blue-100";
+                if (!currentFileToken) throw new Error("ID tidak ditemukan di link");
+
+                document.getElementById('reader-workspace').classList.remove('hidden');
+
+                // Cek apakah ada halaman terakhir yang tersimpan untuk token ini
+                const savedPage = localStorage.getItem(`img_reader_${currentFileToken}`);
+                if (savedPage) {
+                    currentPage = parseInt(savedPage, 10);
+                } else {
+                    // Jika tidak ada memori, ambil angka page dari link yang dipaste
+                    currentPage = parseInt(originalUrlObj.searchParams.get('page') || 1, 10);
+                }
+
+                renderImage();
+
+            } catch (e) {
+                alert("Link tidak valid. Pastikan Anda meng-copy link secara utuh.");
             }
         }
 
-        // Fungsi untuk menyimpan posisi halaman
-        function savePagePosition() {
-            const fileId = fileIdInput.value.trim();
-            const pageNum = pageInput.value.trim();
-            
-            if (!fileId) {
-                alert("Harap masukkan ID File terlebih dahulu.");
-                return;
-            }
+        function renderImage() {
+            // Sembunyikan gambar lama, tampilkan loading
+            documentImage.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
 
-            if (!pageNum || isNaN(pageNum)) {
-                alert("Harap masukkan angka halaman yang valid.");
-                return;
-            }
+            // Ubah parameter page pada URL
+            originalUrlObj.searchParams.set('page', currentPage);
+            
+            // Perbarui kotak angka halaman di UI
+            pageJumpInput.value = currentPage;
 
-            localStorage.setItem(`bookmark_drive_${fileId}`, pageNum);
-            
-            // Ubah tombol jadi indikator sukses sesaat
-            const originalText = saveBtn.innerText;
-            saveBtn.innerText = "Tersimpan! ✔";
-            saveBtn.classList.replace('bg-yellow-400', 'bg-green-400');
-            saveBtn.classList.replace('text-yellow-900', 'text-green-900');
-            
-            setTimeout(() => {
-                saveBtn.innerText = originalText;
-                saveBtn.classList.replace('bg-green-400', 'bg-yellow-400');
-                saveBtn.classList.replace('text-green-900', 'text-yellow-900');
-            }, 2000);
+            // Simpan posisi ke memori browser
+            localStorage.setItem(`img_reader_${currentFileToken}`, currentPage);
+
+            // Muat gambar baru
+            const newImgSrc = originalUrlObj.toString();
+            documentImage.src = newImgSrc;
         }
 
-        // Event Listeners
-        loadBtn.addEventListener('click', loadDriveViewer);
-        saveBtn.addEventListener('click', savePagePosition);
-        
-        // Enter di input ID memuat file
-        fileIdInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loadDriveViewer();
+        // Event listener saat gambar selesai dimuat (sukses)
+        documentImage.onload = () => {
+            loadingIndicator.classList.add('hidden');
+            documentImage.classList.remove('hidden');
+        };
+
+        // Event listener saat gambar gagal dimuat (biasanya karena token expired)
+        documentImage.onerror = () => {
+            loadingIndicator.classList.add('hidden');
+            errorMsg.classList.remove('hidden');
+            documentImage.classList.add('hidden');
+        };
+
+        // Navigasi
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderImage();
+            }
         });
 
-        // Enter di input Halaman langsung menyimpan
-        pageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') savePagePosition();
+        document.getElementById('next-btn').addEventListener('click', () => {
+            currentPage++;
+            renderImage();
         });
 
-        // Muat otomatis saat pertama kali dibuka
-        window.onload = loadDriveViewer;
+        // Lompat halaman manual dengan mengetik angka lalu tekan Enter
+        pageJumpInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const requestedPage = parseInt(pageJumpInput.value, 10);
+                if (requestedPage && requestedPage > 0) {
+                    currentPage = requestedPage;
+                    renderImage();
+                }
+            }
+        });
 
+        document.getElementById('load-btn').addEventListener('click', initReader);
     </script>
 </body>
 </html>
