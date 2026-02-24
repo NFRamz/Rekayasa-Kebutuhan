@@ -3,246 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive Image-Based Reader</title>
+    <title>Pembaca Halaman Google Drive</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f3f4f6; }
-        #viewer-container {
-            display: flex;
-            justify-content: center;
-            overflow: auto;
-            background-color: #e5e7eb;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            min-height: 70vh;
+        /* Animasi loading sederhana */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
         }
-        #document-image {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            background-color: white;
-            max-width: 100%;
-            height: auto;
-            object-fit: contain;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body class="text-gray-800 font-sans p-4 md:p-8 max-w-5xl mx-auto">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
 
-    <div class="bg-white p-6 rounded-xl shadow-md mb-6">
-        <h1 class="text-2xl font-bold mb-2 text-indigo-600">Pembaca PDF via Jalur Gambar</h1>
-        <p class="text-sm text-gray-600 mb-4">Aplikasi ini akan mengekstrak token gambar internal dari Google Drive. Masukkan <b>Link Google Drive biasa</b>, atau link panjang <b>viewer/img</b>.</p>
-        
-        <div class="flex flex-col gap-3">
-            <input type="text" id="drive-input" placeholder="Paste link https://drive.google.com/file/d/.../view" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-            <button id="load-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 w-full md:w-auto self-start flex items-center gap-2">
-                <span>Muat Dokumen</span>
-            </button>
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="max-w-4xl mx-auto flex items-center gap-3">
+            <i class="fas fa-file-pdf text-2xl"></i>
+            <h1 class="text-xl font-bold">GDrive Custom Page Viewer</h1>
         </div>
-        
-        <div id="status-msg" class="text-sm text-indigo-600 font-medium mt-3 hidden">
-            Sedang mengekstrak token rahasia dari Google Drive...
-        </div>
-    </div>
+    </header>
 
-    <div id="reader-workspace" class="bg-white p-6 rounded-xl shadow-md hidden">
+    <main class="max-w-4xl mx-auto p-4 mt-6">
         
-        <!-- Papan Kontrol Navigasi -->
-        <div class="flex flex-wrap gap-2 justify-between items-center mb-4 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-            <button id="prev-btn" class="bg-indigo-200 hover:bg-indigo-300 text-indigo-800 px-4 py-2 rounded font-medium transition">
-                &larr; Halaman Sebelumnya
-            </button>
-            <div class="flex items-center gap-2">
-                <span class="font-semibold text-gray-700">Halaman: </span>
-                <input type="number" id="page-jump" min="1" class="w-16 px-2 py-1 text-center border border-gray-300 rounded font-bold text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <!-- Alert Lanjutkan Membaca (Awalnya Sembunyi) -->
+        <div id="alertLanjutkan" class="hidden bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+            <div>
+                <h3 class="font-semibold text-blue-900"><i class="fas fa-bookmark mr-2 text-blue-600"></i> Lanjutkan Membaca?</h3>
+                <p class="text-sm mt-1 text-blue-700">Anda memiliki sesi sebelumnya pada halaman <span id="lblHalamanTersimpan" class="font-bold bg-blue-200 px-2 py-0.5 rounded"></span>.</p>
             </div>
-            <button id="next-btn" class="bg-indigo-200 hover:bg-indigo-300 text-indigo-800 px-4 py-2 rounded font-medium transition">
-                Halaman Selanjutnya &rarr;
-            </button>
-        </div>
-
-        <div id="loading-indicator" class="text-center py-10 hidden">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-2"></div>
-            <p class="text-gray-500 text-sm">Mengambil gambar dari server Google...</p>
-        </div>
-
-        <!-- Area Gambar Dokumen -->
-        <div id="viewer-container">
-            <img id="document-image" src="" alt="Halaman Dokumen" class="hidden">
-            <div id="error-msg" class="hidden text-red-500 font-medium py-10 text-center flex flex-col items-center gap-2">
-                <span>Gagal memuat gambar atau Token link sudah kedaluwarsa.</span>
-                <span class="text-sm text-gray-600 font-normal">Jika mengekstrak link otomatis gagal karena diblokir Google, silakan ambil link gambar (viewer/img...) secara manual dari tab Network dan paste ke atas.</span>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <button onclick="hapusRiwayat()" class="flex-1 sm:flex-none px-4 py-2 text-sm text-blue-700 hover:bg-blue-100 border border-transparent hover:border-blue-300 rounded-lg transition-colors">Abaikan</button>
+                <button onclick="lanjutkanRiwayat()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-sm rounded-lg font-medium transition-colors shadow-sm">Lanjutkan</button>
             </div>
         </div>
-    </div>
+
+        <!-- Kartu Input URL -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-2">1. Masukkan URL Viewer Gambar</h2>
+            <p class="text-sm text-slate-500 mb-4">Masukkan URL panjang dari Google Drive yang mengandung parameter <code>/viewer/img?id=...</code></p>
+            
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="urlInput" 
+                    class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    placeholder="https://drive.google.com/viewer/img?id=..."
+                    value="https://drive.google.com/viewer/img?id=ACFrOgB3F8djKDswfjsc1xRFnuUeciZChRRlhYwtytLsoR1LueltINLizkN7Sx6UpSTyfV9X2Kwy5FYMsSktpwYQDIS39qv-QYn4jGT1vmsUbN1ltMezve4LqK7OPWF2Zs6d-M-M7jfNPb19ogrZxQGuIe8sZ4OLHGFYEy5yyXcM1YDsa3q5J8AK2uKQw7GsRvzOGA9zoC4f340RnZfBMaXOjSZFhU5yzyYzNQnMLuF6TVfRXl2AFoXReDDXpTk%3D&dsmi=texmex&auditContext=forDisplay&page=0&w=800&webp=true">
+                <button onclick="inisialisasiViewer()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                    Muat Dokumen
+                </button>
+            </div>
+            <div class="mt-3 text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2">
+                <i class="fas fa-info-circle mt-0.5"></i> 
+                <span>Catatan: Link standar <code>/file/d/...</code> tidak bisa digunakan di sini karena token gambar dibuat secara dinamis oleh Google. Token juga bisa kadaluarsa setelah beberapa waktu.</span>
+            </div>
+        </div>
+
+        <!-- Area Viewer (Awalnya Disembunyikan) -->
+        <div id="viewerContainer" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col items-center">
+            
+            <!-- Kontrol Navigasi -->
+            <div class="flex items-center justify-between w-full max-w-2xl mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-inner">
+                <button onclick="gantiHalaman(-1)" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-chevron-left"></i> Sebelumnya
+                </button>
+                
+                <div class="font-semibold text-slate-700 flex items-center gap-2">
+                    Halaman <span id="labelHalaman" class="bg-blue-100 text-blue-800 px-4 py-1 rounded-full border border-blue-200 shadow-sm">0</span>
+                </div>
+                
+                <button onclick="gantiHalaman(1)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2 shadow-sm">
+                    Selanjutnya <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Area Gambar -->
+            <div class="relative w-full flex justify-center bg-slate-100 rounded-lg min-h-[500px] border border-slate-200 overflow-hidden shadow-inner">
+                <!-- Indikator Loading -->
+                <div id="loadingIndicator" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 hidden backdrop-blur-sm">
+                    <div class="loader mb-3"></div>
+                    <span class="text-sm font-medium text-slate-600 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">Memuat halaman...</span>
+                </div>
+                
+                <!-- Gambar Dokumen -->
+                <img id="gambarDokumen" src="" alt="Dokumen Halaman" class="max-w-full h-auto object-contain shadow-sm transition-opacity duration-300">
+            </div>
+
+            <div class="w-full max-w-2xl mt-4">
+                <p class="text-xs font-medium text-slate-500 mb-1 flex items-center gap-1"><i class="fas fa-link"></i> URL halaman saat ini:</p>
+                <input type="text" id="urlSaatIni" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400" readonly onclick="this.select()">
+            </div>
+        </div>
+
+    </main>
 
     <script>
-        let currentFileToken = "";
-        let currentPage = 1;
-        let originalUrlObj = null;
+        let objekUrlSaatIni = null;
+        let halamanSaatIni = 0;
 
-        const driveInput = document.getElementById('drive-input');
-        const documentImage = document.getElementById('document-image');
-        const pageJumpInput = document.getElementById('page-jump');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const errorMsg = document.getElementById('error-msg');
-        const statusMsg = document.getElementById('status-msg');
-        const loadBtn = document.getElementById('load-btn');
-        const readerWorkspace = document.getElementById('reader-workspace');
+        // Cek riwayat saat halaman pertama kali dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            cekRiwayatTersimpan();
+        });
 
-        async function initReader() {
-            const rawLink = driveInput.value.trim();
-            if (!rawLink) {
-                alert("Harap masukkan link Google Drive!");
+        function cekRiwayatTersimpan() {
+            const savedUrl = localStorage.getItem('gdrive_saved_url');
+            const savedPage = localStorage.getItem('gdrive_saved_page');
+
+            if (savedUrl && savedPage !== null) {
+                document.getElementById('lblHalamanTersimpan').innerText = savedPage;
+                document.getElementById('alertLanjutkan').classList.remove('hidden');
+            }
+        }
+
+        function hapusRiwayat() {
+            localStorage.removeItem('gdrive_saved_url');
+            localStorage.removeItem('gdrive_saved_page');
+            document.getElementById('alertLanjutkan').classList.add('hidden');
+        }
+
+        function lanjutkanRiwayat() {
+            const savedUrl = localStorage.getItem('gdrive_saved_url');
+            const savedPage = localStorage.getItem('gdrive_saved_page');
+
+            if (savedUrl && savedPage !== null) {
+                document.getElementById('urlInput').value = savedUrl;
+                document.getElementById('alertLanjutkan').classList.add('hidden');
+                
+                // Mulai viewer dengan menargetkan halaman yang tersimpan
+                inisialisasiViewer(parseInt(savedPage));
+            }
+        }
+
+        function inisialisasiViewer(targetPage = null) {
+            const inputUrl = document.getElementById('urlInput').value.trim();
+            
+            if (!inputUrl) {
+                alert("Harap masukkan URL terlebih dahulu!");
                 return;
             }
 
-            readerWorkspace.classList.add('hidden');
-            errorMsg.classList.add('hidden');
-
-            // Cek apakah yang dimasukkan adalah link panjang (jalur gambar manual)
-            if (rawLink.includes('viewer/img')) {
-                processLongLink(rawLink);
-            } 
-            // Cek apakah yang dimasukkan adalah link standar Google Drive
-            else if (rawLink.includes('drive.google.com/file/d/')) {
-                await extractTokenAndLoad(rawLink);
-            } 
-            else {
-                alert("Format link tidak dikenali. Pastikan itu adalah link Google Drive.");
-            }
-        }
-
-        // ALUR 1: Memproses Link Ekstraksi Otomatis
-        async function extractTokenAndLoad(standardUrl) {
-            statusMsg.classList.remove('hidden');
-            loadBtn.disabled = true;
-            loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
             try {
-                // Menggunakan proxy untuk menghindari blokir CORS
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(standardUrl)}`;
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                if (!data.contents) throw new Error("Gagal mengambil data dari proxy");
+                // Parsing URL yang dimasukkan
+                objekUrlSaatIni = new URL(inputUrl);
 
-                // Mencari pola token ACFrOg... dari kode sumber HTML/Payload
-                const tokenMatch = data.contents.match(/(ACFrOg[a-zA-Z0-9_-]+)/);
-                
-                if (tokenMatch && tokenMatch[1]) {
-                    console.log("Token berhasil ditemukan!", tokenMatch[1]);
-                    
-                    // Rakit URL gambar internal yang baru
-                    const generatedUrl = `https://drive.google.com/viewer/img?id=${tokenMatch[1]}&w=800&webp=true`;
-                    
-                    statusMsg.innerText = "Token berhasil diekstrak! Memuat halaman...";
-                    setTimeout(() => statusMsg.classList.add('hidden'), 2000);
-                    
-                    processLongLink(generatedUrl);
-                } else {
-                    throw new Error("Pola Token tidak ditemukan dalam payload");
+                // Validasi sederhana memastikan ini link viewer gambar GDrive
+                if (!objekUrlSaatIni.pathname.includes('/viewer/img')) {
+                    alert('URL sepertinya bukan format gambar viewer Google Drive yang valid. Harap pastikan URL mengandung "/viewer/img".');
+                    return;
                 }
 
-            } catch (err) {
-                console.error(err);
-                statusMsg.classList.add('hidden');
-                alert("Sistem keamanan Google memblokir ekstraksi otomatis. Silakan cari link 'viewer/img' secara manual melalui tab Network browser Anda dan paste di kotak input.");
-            } finally {
-                loadBtn.disabled = false;
-                loadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                statusMsg.innerText = "Sedang mengekstrak token rahasia dari Google Drive...";
-            }
-        }
-
-        // ALUR 2: Memproses Eksekusi Tampilan Gambar
-        function processLongLink(imageUrl) {
-            try {
-                originalUrlObj = new URL(imageUrl);
-                // Ekstrak Token ID unik (ACFrOg...) sebagai kunci penyimpanan
-                currentFileToken = originalUrlObj.searchParams.get('id'); 
+                // Ambil parameter halaman saat ini dari URL jika ada
+                const paramHalaman = objekUrlSaatIni.searchParams.get('page');
                 
-                if (!currentFileToken) throw new Error("ID tidak ditemukan di link");
-
-                readerWorkspace.classList.remove('hidden');
-
-                // Cek apakah ada halaman terakhir yang tersimpan untuk token ini
-                const savedPage = localStorage.getItem(`img_reader_${currentFileToken}`);
-                if (savedPage) {
-                    currentPage = parseInt(savedPage, 10);
+                // Gunakan targetPage jika ada (dari riwayat), jika tidak gunakan dari URL/0
+                if (targetPage !== null) {
+                    halamanSaatIni = targetPage;
                 } else {
-                    // Jika tidak ada memori, ambil angka page dari link atau mulai dari 1
-                    currentPage = parseInt(originalUrlObj.searchParams.get('page') || 1, 10);
+                    halamanSaatIni = paramHalaman ? parseInt(paramHalaman) : 0;
                 }
 
-                renderImage();
+                // Simpan URL dasar ke local storage
+                localStorage.setItem('gdrive_saved_url', inputUrl);
 
-            } catch (e) {
-                alert("Link tidak valid. Pastikan format link benar.");
+                // Tampilkan kontainer viewer
+                document.getElementById('viewerContainer').classList.remove('hidden');
+                document.getElementById('alertLanjutkan').classList.add('hidden');
+                
+                // Mulai muat gambar
+                perbaruiTampilanGambar();
+
+            } catch (error) {
+                alert("URL tidak valid. Harap periksa kembali format URL Anda.");
+                console.error(error);
             }
         }
 
-        function renderImage() {
-            // Sembunyikan gambar lama, tampilkan loading
-            documentImage.classList.add('hidden');
-            errorMsg.classList.add('hidden');
-            loadingIndicator.classList.remove('hidden');
-
-            // Ubah parameter page pada URL
-            originalUrlObj.searchParams.set('page', currentPage);
+        function gantiHalaman(perubahan) {
+            // Mencegah halaman menjadi negatif
+            if (halamanSaatIni + perubahan < 0) return;
             
-            // Perbarui kotak angka halaman di UI
-            pageJumpInput.value = currentPage;
-
-            // Simpan posisi ke memori browser
-            localStorage.setItem(`img_reader_${currentFileToken}`, currentPage);
-
-            // Muat gambar baru
-            const newImgSrc = originalUrlObj.toString();
-            documentImage.src = newImgSrc;
+            halamanSaatIni += perubahan;
+            perbaruiTampilanGambar();
         }
 
-        // Event listener saat gambar selesai dimuat (sukses)
-        documentImage.onload = () => {
-            loadingIndicator.classList.add('hidden');
-            documentImage.classList.remove('hidden');
-        };
+        function perbaruiTampilanGambar() {
+            if (!objekUrlSaatIni) return;
 
-        // Event listener saat gambar gagal dimuat (biasanya karena token expired)
-        documentImage.onerror = () => {
-            loadingIndicator.classList.add('hidden');
-            errorMsg.classList.remove('hidden');
-            documentImage.classList.add('hidden');
-        };
+            // Memperbarui parameter 'page' di URL
+            objekUrlSaatIni.searchParams.set('page', halamanSaatIni);
+            const urlBaru = objekUrlSaatIni.toString();
 
-        // Navigasi
-        document.getElementById('prev-btn').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderImage();
-            }
-        });
+            const elemenGambar = document.getElementById('gambarDokumen');
+            const indikatorLoading = document.getElementById('loadingIndicator');
+            const labelHalaman = document.getElementById('labelHalaman');
+            const inputUrlSaatIni = document.getElementById('urlSaatIni');
 
-        document.getElementById('next-btn').addEventListener('click', () => {
-            currentPage++;
-            renderImage();
-        });
+            // Tampilkan UI Loading
+            indikatorLoading.classList.remove('hidden');
+            elemenGambar.classList.add('opacity-40');
 
-        // Lompat halaman manual dengan mengetik angka lalu tekan Enter
-        pageJumpInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const requestedPage = parseInt(pageJumpInput.value, 10);
-                if (requestedPage && requestedPage > 0) {
-                    currentPage = requestedPage;
-                    renderImage();
+            // Set URL baru ke elemen gambar
+            elemenGambar.src = urlBaru;
+            
+            // Perbarui teks informasi
+            labelHalaman.innerText = halamanSaatIni;
+            inputUrlSaatIni.value = urlBaru;
+
+            // Simpan halaman terakhir ke localStorage setiap kali ganti halaman
+            localStorage.setItem('gdrive_saved_page', halamanSaatIni);
+
+            // Event ketika gambar berhasil dimuat
+            elemenGambar.onload = function() {
+                indikatorLoading.classList.add('hidden');
+                elemenGambar.classList.remove('opacity-40');
+            };
+
+            // Event ketika gambar gagal dimuat (misal: token expired atau lewat batas halaman)
+            elemenGambar.onerror = function() {
+                indikatorLoading.classList.add('hidden');
+                elemenGambar.classList.remove('opacity-40');
+                
+                // Jika gagal di halaman > 0, biasanya karena sudah di halaman terakhir
+                // atau token sesinya sudah kedaluwarsa.
+                if (halamanSaatIni > 0) {
+                    alert("Gagal memuat gambar. Kemungkinan Anda telah mencapai halaman terakhir, atau Link (Token) sesi Google Drive ini sudah kadaluarsa. Silakan ambil link baru dari Inspect Element.");
+                } else {
+                    alert("Gagal memuat gambar. Link (Token) mungkin sudah kadaluarsa.");
                 }
-            }
-        });
-
-        document.getElementById('load-btn').addEventListener('click', initReader);
-        
-        driveInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') initReader();
-        });
+            };
+        }
     </script>
 </body>
 </html>
