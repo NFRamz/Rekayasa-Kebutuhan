@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Drive Book Reader</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+body { margin:0; text-align:center; background:#222; }
+canvas { margin:10px auto; display:block; }
+#topbar{
+position:fixed;
+top:0;
+width:100%;
+background:#111;
+color:white;
+padding:10px;
+font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="topbar">Halaman: <span id="page_num"></span></div>
+<canvas id="pdf-render"></canvas>
+
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const fileId = urlParams.get('file');
+
+const pdfUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+
+let pdfDoc = null,
+pageNum = localStorage.getItem(fileId) || 1,
+canvas = document.getElementById('pdf-render'),
+ctx = canvas.getContext('2d');
+
+pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+pdfDoc = pdf;
+renderPage(pageNum);
+});
+
+function renderPage(num){
+pdfDoc.getPage(parseInt(num)).then(page=>{
+let viewport = page.getViewport({scale:1.5});
+canvas.height = viewport.height;
+canvas.width = viewport.width;
+
+page.render({canvasContext:ctx,viewport:viewport});
+
+document.getElementById('page_num').textContent = num;
+
+// SIMPAN HALAMAN TERAKHIR
+localStorage.setItem(fileId,num);
+});
+}
+
+window.addEventListener('keydown',e=>{
+if(e.key==="ArrowRight"){pageNum++;renderPage(pageNum);}
+if(e.key==="ArrowLeft"){pageNum--;renderPage(pageNum);}
+});
+</script>
+
+</body>
+</html>
