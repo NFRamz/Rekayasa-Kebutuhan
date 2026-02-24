@@ -3,243 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembaca Halaman Google Drive</title>
+    <title>Pembaca PDF dengan Memori</title>
+    <!-- Tailwind CSS untuk Styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- PDF.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Phosphor Icons untuk Ikon -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        /* Animasi loading sederhana */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Mencegah highlight biru saat klik tombol di mobile */
+        button { -webkit-tap-highlight-color: transparent; }
+        #canvas-container {
+            min-height: 60vh;
+            max-height: 70vh;
+            overflow: auto;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
+<body class="bg-gray-100 text-gray-800 font-sans p-4 md:p-8">
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow-md">
-        <div class="max-w-4xl mx-auto flex items-center gap-3">
-            <i class="fas fa-file-pdf text-2xl"></i>
-            <h1 class="text-xl font-bold">GDrive Custom Page Viewer</h1>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto p-4 mt-6">
+    <div class="max-w-4xl mx-auto space-y-6">
         
-        <!-- Alert Lanjutkan Membaca (Awalnya Sembunyi) -->
-        <div id="alertLanjutkan" class="hidden bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
-            <div>
-                <h3 class="font-semibold text-blue-900"><i class="fas fa-bookmark mr-2 text-blue-600"></i> Lanjutkan Membaca?</h3>
-                <p class="text-sm mt-1 text-blue-700">Anda memiliki sesi sebelumnya pada halaman <span id="lblHalamanTersimpan" class="font-bold bg-blue-200 px-2 py-0.5 rounded"></span>.</p>
-            </div>
-            <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="hapusRiwayat()" class="flex-1 sm:flex-none px-4 py-2 text-sm text-blue-700 hover:bg-blue-100 border border-transparent hover:border-blue-300 rounded-lg transition-colors">Abaikan</button>
-                <button onclick="lanjutkanRiwayat()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-sm rounded-lg font-medium transition-colors shadow-sm">Lanjutkan</button>
-            </div>
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-blue-700 flex items-center justify-center gap-2">
+                <i class="ph ph-book-open-text text-4xl"></i> Pembaca PDF Pintar
+            </h1>
+            <p class="text-gray-500 mt-2">Mengingat lokasi halaman terakhir yang Anda baca.</p>
         </div>
 
-        <!-- Kartu Input URL -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-2">1. Masukkan URL Viewer Gambar</h2>
-            <p class="text-sm text-slate-500 mb-4">Masukkan URL panjang dari Google Drive yang mengandung parameter <code>/viewer/img?id=...</code></p>
-            
-            <div class="flex flex-col sm:flex-row gap-3">
-                <input type="text" id="urlInput" 
-                    class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    placeholder="https://drive.google.com/viewer/img?id=..."
-                    value="https://drive.google.com/viewer/img?id=ACFrOgB3F8djKDswfjsc1xRFnuUeciZChRRlhYwtytLsoR1LueltINLizkN7Sx6UpSTyfV9X2Kwy5FYMsSktpwYQDIS39qv-QYn4jGT1vmsUbN1ltMezve4LqK7OPWF2Zs6d-M-M7jfNPb19ogrZxQGuIe8sZ4OLHGFYEy5yyXcM1YDsa3q5J8AK2uKQw7GsRvzOGA9zoC4f340RnZfBMaXOjSZFhU5yzyYzNQnMLuF6TVfRXl2AFoXReDDXpTk%3D&dsmi=texmex&auditContext=forDisplay&page=0&w=800&webp=true">
-                <button onclick="inisialisasiViewer()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm">
-                    Muat Dokumen
-                </button>
-            </div>
-            <div class="mt-3 text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2">
-                <i class="fas fa-info-circle mt-0.5"></i> 
-                <span>Catatan: Link standar <code>/file/d/...</code> tidak bisa digunakan di sini karena token gambar dibuat secara dinamis oleh Google. Token juga bisa kadaluarsa setelah beberapa waktu.</span>
-            </div>
-        </div>
-
-        <!-- Area Viewer (Awalnya Disembunyikan) -->
-        <div id="viewerContainer" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col items-center">
-            
-            <!-- Kontrol Navigasi -->
-            <div class="flex items-center justify-between w-full max-w-2xl mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-inner">
-                <button onclick="gantiHalaman(-1)" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2 shadow-sm">
-                    <i class="fas fa-chevron-left"></i> Sebelumnya
-                </button>
-                
-                <div class="font-semibold text-slate-700 flex items-center gap-2">
-                    Halaman <span id="labelHalaman" class="bg-blue-100 text-blue-800 px-4 py-1 rounded-full border border-blue-200 shadow-sm">0</span>
+        <!-- Panel Input -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Link PDF (Langsung atau Google Drive)</label>
+                    <input type="text" id="file-url" placeholder="Contoh: https://drive.google.com/file/d/1ewNh.../view" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                
-                <button onclick="gantiHalaman(1)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2 shadow-sm">
-                    Selanjutnya <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-
-            <!-- Area Gambar -->
-            <div class="relative w-full flex justify-center bg-slate-100 rounded-lg min-h-[500px] border border-slate-200 overflow-hidden shadow-inner">
-                <!-- Indikator Loading -->
-                <div id="loadingIndicator" class="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 hidden backdrop-blur-sm">
-                    <div class="loader mb-3"></div>
-                    <span class="text-sm font-medium text-slate-600 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">Memuat halaman...</span>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">
+                        Google Drive API Key <span class="text-xs text-gray-400 font-normal">(Wajib untuk link GDrive)</span>
+                    </label>
+                    <input type="password" id="api-key" placeholder="Masukkan API Key GCP Anda" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
-                
-                <!-- Gambar Dokumen -->
-                <img id="gambarDokumen" src="" alt="Dokumen Halaman" class="max-w-full h-auto object-contain shadow-sm transition-opacity duration-300">
             </div>
-
-            <div class="w-full max-w-2xl mt-4">
-                <p class="text-xs font-medium text-slate-500 mb-1 flex items-center gap-1"><i class="fas fa-link"></i> URL halaman saat ini:</p>
-                <input type="text" id="urlSaatIni" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400" readonly onclick="this.select()">
+            <div class="mt-4 flex justify-end">
+                <button id="load-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="ph ph-folder-open"></i> Buka Dokumen
+                </button>
             </div>
         </div>
 
-    </main>
+        <!-- Panel Viewer -->
+        <div id="viewer-panel" class="bg-white rounded-2xl shadow-sm border border-gray-200 hidden overflow-hidden">
+            
+            <!-- Toolbar Atas -->
+            <div class="bg-gray-50 border-b border-gray-200 p-4 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <button id="prev-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
+                        <i class="ph ph-caret-left text-lg"></i>
+                    </button>
+                    <span class="font-medium text-sm md:text-base">
+                        Halaman <span id="page-num" class="font-bold text-blue-600">0</span> dari <span id="page-count">0</span>
+                    </span>
+                    <button id="next-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
+                        <i class="ph ph-caret-right text-lg"></i>
+                    </button>
+                </div>
+                <div>
+                    <span id="save-status" class="text-xs md:text-sm text-green-600 font-medium opacity-0 transition-opacity duration-300 flex items-center gap-1">
+                        <i class="ph ph-check-circle"></i> Posisi Tersimpan
+                    </span>
+                </div>
+            </div>
+
+            <!-- Area Canvas PDF -->
+            <div id="canvas-container" class="bg-gray-300 flex justify-center p-4 relative">
+                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-gray-300 bg-opacity-80 z-10 hidden">
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="ph ph-spinner-gap animate-spin text-4xl text-blue-600"></i>
+                        <span class="font-medium text-gray-700">Memuat Dokumen...</span>
+                    </div>
+                </div>
+                <canvas id="pdf-canvas" class="shadow-lg bg-white"></canvas>
+            </div>
+        </div>
+
+    </div>
 
     <script>
-        let objekUrlSaatIni = null;
-        let halamanSaatIni = 0;
+        // Setup Web Worker PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Cek riwayat saat halaman pertama kali dimuat
-        document.addEventListener('DOMContentLoaded', () => {
-            cekRiwayatTersimpan();
-        });
+        // Variabel State Aplikasi
+        const state = {
+            pdfDoc: null,
+            pageNum: 1,
+            pageRendering: false,
+            pageNumPending: null,
+            url: '',
+            apiKey: ''
+        };
 
-        function cekRiwayatTersimpan() {
-            const savedUrl = localStorage.getItem('gdrive_saved_url');
-            const savedPage = localStorage.getItem('gdrive_saved_page');
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        const viewerPanel = document.getElementById('viewer-panel');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const saveStatus = document.getElementById('save-status');
 
-            if (savedUrl && savedPage !== null) {
-                document.getElementById('lblHalamanTersimpan').innerText = savedPage;
-                document.getElementById('alertLanjutkan').classList.remove('hidden');
-            }
-        }
-
-        function hapusRiwayat() {
-            localStorage.removeItem('gdrive_saved_url');
-            localStorage.removeItem('gdrive_saved_page');
-            document.getElementById('alertLanjutkan').classList.add('hidden');
-        }
-
-        function lanjutkanRiwayat() {
-            const savedUrl = localStorage.getItem('gdrive_saved_url');
-            const savedPage = localStorage.getItem('gdrive_saved_page');
-
-            if (savedUrl && savedPage !== null) {
-                document.getElementById('urlInput').value = savedUrl;
-                document.getElementById('alertLanjutkan').classList.add('hidden');
+        // 1. Fungsi Dijalankan Saat Web Pertama Dibuka
+        window.onload = function() {
+            const savedData = localStorage.getItem('smartPdfReaderState');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                document.getElementById('file-url').value = parsed.url || '';
+                document.getElementById('api-key').value = parsed.apiKey || '';
                 
-                // Mulai viewer dengan menargetkan halaman yang tersimpan
-                inisialisasiViewer(parseInt(savedPage));
+                if (parsed.url) {
+                    // Jika ada data tersimpan, langsung proses muat dokumen
+                    state.pageNum = parsed.page || 1;
+                    loadDocument(parsed.url, parsed.apiKey, state.pageNum);
+                }
+            } else {
+                // Link default untuk demonstrasi (CORS friendly)
+                document.getElementById('file-url').value = 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf';
             }
+        };
+
+        // 2. Fungsi Menyimpan Posisi ke Memori Browser
+        function saveState() {
+            if(!state.url) return;
+            localStorage.setItem('smartPdfReaderState', JSON.stringify({
+                url: state.url,
+                apiKey: state.apiKey,
+                page: state.pageNum
+            }));
+
+            // Tampilkan animasi kecil "Posisi Tersimpan"
+            saveStatus.classList.remove('opacity-0');
+            setTimeout(() => saveStatus.classList.add('opacity-0'), 2000);
         }
 
-        function inisialisasiViewer(targetPage = null) {
-            const inputUrl = document.getElementById('urlInput').value.trim();
+        // 3. Logika Utama Memuat Dokumen
+        async function loadDocument(inputUrl, apiKey, startPage = 1) {
+            if (!inputUrl) return alert("Masukkan link PDF terlebih dahulu!");
+
+            state.url = inputUrl;
+            state.apiKey = apiKey;
+            let fetchUrl = inputUrl;
+
+            // Deteksi jika pengguna memasukkan link Google Drive biasa
+            const gdriveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+            const match = inputUrl.match(gdriveRegex);
             
-            if (!inputUrl) {
-                alert("Harap masukkan URL terlebih dahulu!");
-                return;
-            }
-
-            try {
-                // Parsing URL yang dimasukkan
-                objekUrlSaatIni = new URL(inputUrl);
-
-                // Validasi sederhana memastikan ini link viewer gambar GDrive
-                if (!objekUrlSaatIni.pathname.includes('/viewer/img')) {
-                    alert('URL sepertinya bukan format gambar viewer Google Drive yang valid. Harap pastikan URL mengandung "/viewer/img".');
+            if (match) {
+                if (!apiKey) {
+                    alert("Untuk link Google Drive, Anda WAJIB memasukkan API Key Google Cloud di kolom yang disediakan. Jika tidak, file akan diblokir oleh keamanan browser (CORS).");
                     return;
                 }
+                // Ubah link web menjadi link akses file via Google Drive API
+                const fileId = match[1];
+                fetchUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+            }
 
-                // Ambil parameter halaman saat ini dari URL jika ada
-                const paramHalaman = objekUrlSaatIni.searchParams.get('page');
+            viewerPanel.classList.remove('hidden');
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(fetchUrl);
+                state.pdfDoc = await loadingTask.promise;
                 
-                // Gunakan targetPage jika ada (dari riwayat), jika tidak gunakan dari URL/0
-                if (targetPage !== null) {
-                    halamanSaatIni = targetPage;
-                } else {
-                    halamanSaatIni = paramHalaman ? parseInt(paramHalaman) : 0;
-                }
-
-                // Simpan URL dasar ke local storage
-                localStorage.setItem('gdrive_saved_url', inputUrl);
-
-                // Tampilkan kontainer viewer
-                document.getElementById('viewerContainer').classList.remove('hidden');
-                document.getElementById('alertLanjutkan').classList.add('hidden');
+                document.getElementById('page-count').textContent = state.pdfDoc.numPages;
                 
-                // Mulai muat gambar
-                perbaruiTampilanGambar();
-
+                // Pastikan halaman tidak melebihi total halaman
+                if (startPage > state.pdfDoc.numPages) startPage = state.pdfDoc.numPages;
+                state.pageNum = startPage;
+                
+                renderPage(state.pageNum);
+                loadingIndicator.classList.add('hidden');
             } catch (error) {
-                alert("URL tidak valid. Harap periksa kembali format URL Anda.");
                 console.error(error);
+                loadingIndicator.classList.add('hidden');
+                viewerPanel.classList.add('hidden');
+                alert("Gagal memuat PDF.\nPastikan link benar, status file Publik, dan API Key Anda valid/memiliki izin akses.");
             }
         }
 
-        function gantiHalaman(perubahan) {
-            // Mencegah halaman menjadi negatif
-            if (halamanSaatIni + perubahan < 0) return;
+        // 4. Merender (Menggambar) Halaman ke Canvas
+        function renderPage(num) {
+            state.pageRendering = true;
             
-            halamanSaatIni += perubahan;
-            perbaruiTampilanGambar();
+            state.pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({scale: 1.5}); // Skala 1.5x agar tidak blur
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function() {
+                    state.pageRendering = false;
+                    if (state.pageNumPending !== null) {
+                        renderPage(state.pageNumPending);
+                        state.pageNumPending = null;
+                    }
+                });
+            });
+
+            // Update UI & Simpan State
+            document.getElementById('page-num').textContent = num;
+            
+            // Atur status tombol prev/next
+            document.getElementById('prev-btn').disabled = num <= 1;
+            document.getElementById('next-btn').disabled = num >= state.pdfDoc.numPages;
+
+            saveState(); // Eksekusi penyimpanan otomatis setiap kali pindah halaman
         }
 
-        function perbaruiTampilanGambar() {
-            if (!objekUrlSaatIni) return;
-
-            // Memperbarui parameter 'page' di URL
-            objekUrlSaatIni.searchParams.set('page', halamanSaatIni);
-            const urlBaru = objekUrlSaatIni.toString();
-
-            const elemenGambar = document.getElementById('gambarDokumen');
-            const indikatorLoading = document.getElementById('loadingIndicator');
-            const labelHalaman = document.getElementById('labelHalaman');
-            const inputUrlSaatIni = document.getElementById('urlSaatIni');
-
-            // Tampilkan UI Loading
-            indikatorLoading.classList.remove('hidden');
-            elemenGambar.classList.add('opacity-40');
-
-            // Set URL baru ke elemen gambar
-            elemenGambar.src = urlBaru;
-            
-            // Perbarui teks informasi
-            labelHalaman.innerText = halamanSaatIni;
-            inputUrlSaatIni.value = urlBaru;
-
-            // Simpan halaman terakhir ke localStorage setiap kali ganti halaman
-            localStorage.setItem('gdrive_saved_page', halamanSaatIni);
-
-            // Event ketika gambar berhasil dimuat
-            elemenGambar.onload = function() {
-                indikatorLoading.classList.add('hidden');
-                elemenGambar.classList.remove('opacity-40');
-            };
-
-            // Event ketika gambar gagal dimuat (misal: token expired atau lewat batas halaman)
-            elemenGambar.onerror = function() {
-                indikatorLoading.classList.add('hidden');
-                elemenGambar.classList.remove('opacity-40');
-                
-                // Jika gagal di halaman > 0, biasanya karena sudah di halaman terakhir
-                // atau token sesinya sudah kedaluwarsa.
-                if (halamanSaatIni > 0) {
-                    alert("Gagal memuat gambar. Kemungkinan Anda telah mencapai halaman terakhir, atau Link (Token) sesi Google Drive ini sudah kadaluarsa. Silakan ambil link baru dari Inspect Element.");
-                } else {
-                    alert("Gagal memuat gambar. Link (Token) mungkin sudah kadaluarsa.");
-                }
-            };
+        function queueRenderPage(num) {
+            if (state.pageRendering) {
+                state.pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
         }
+
+        // 5. Event Listeners untuk Interaksi
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (state.pageNum <= 1) return;
+            state.pageNum--;
+            queueRenderPage(state.pageNum);
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (state.pageNum >= state.pdfDoc.numPages) return;
+            state.pageNum++;
+            queueRenderPage(state.pageNum);
+        });
+
+        document.getElementById('load-btn').addEventListener('click', () => {
+            const inputUrl = document.getElementById('file-url').value;
+            const apiKey = document.getElementById('api-key').value;
+            
+            // Reset ke halaman 1 jika pengguna membuka buku/URL yang berbeda dari sebelumnya
+            if (inputUrl !== state.url) {
+                state.pageNum = 1;
+            }
+            loadDocument(inputUrl, apiKey, state.pageNum);
+        });
+
     </script>
 </body>
 </html>
