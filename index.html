@@ -27,40 +27,68 @@ font-size:18px;
 <canvas id="pdf-render"></canvas>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const fileId = urlParams.get('file');
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-const pdfUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+const params = new URLSearchParams(window.location.search);
+const fileId = params.get("file");
 
-let pdfDoc = null,
-pageNum = localStorage.getItem(fileId) || 1,
-canvas = document.getElementById('pdf-render'),
-ctx = canvas.getContext('2d');
+if(!fileId){
+document.body.innerHTML="<h2>Tambahkan ?file=ID_DRIVE</h2>";
+throw "No file id";
+}
 
-pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-pdfDoc = pdf;
-renderPage(pageNum);
+// PENTING: pakai gview proxy
+const pdfUrl =
+"https://docs.google.com/gview?embedded=1&url=" +
+encodeURIComponent("https://drive.google.com/uc?export=download&id="+fileId);
+
+let pdfDoc=null;
+let pageNum=parseInt(localStorage.getItem(fileId))||1;
+const canvas=document.getElementById("pdf-render");
+const ctx=canvas.getContext("2d");
+
+async function loadPdf(){
+const loadingTask = pdfjsLib.getDocument({
+url: "https://drive.google.com/uc?export=download&id="+fileId,
+withCredentials:false
 });
 
+pdfDoc = await loadingTask.promise;
+renderPage(pageNum);
+}
+
 function renderPage(num){
-pdfDoc.getPage(parseInt(num)).then(page=>{
-let viewport = page.getViewport({scale:1.5});
-canvas.height = viewport.height;
-canvas.width = viewport.width;
 
-page.render({canvasContext:ctx,viewport:viewport});
+if(num<1) num=1;
+if(num>pdfDoc.numPages) num=pdfDoc.numPages;
 
-document.getElementById('page_num').textContent = num;
+pageNum=num;
 
-// SIMPAN HALAMAN TERAKHIR
+pdfDoc.getPage(num).then(page=>{
+const viewport=page.getViewport({scale:1.5});
+
+canvas.height=viewport.height;
+canvas.width=viewport.width;
+
+page.render({
+canvasContext:ctx,
+viewport:viewport
+});
+
+document.getElementById("page_num").textContent=num;
+
+// simpan halaman terakhir
 localStorage.setItem(fileId,num);
 });
 }
 
-window.addEventListener('keydown',e=>{
-if(e.key==="ArrowRight"){pageNum++;renderPage(pageNum);}
-if(e.key==="ArrowLeft"){pageNum--;renderPage(pageNum);}
+window.addEventListener("keydown",e=>{
+if(e.key==="ArrowRight"){renderPage(pageNum+1);}
+if(e.key==="ArrowLeft"){renderPage(pageNum-1);}
 });
+
+loadPdf();
 </script>
 
 </body>
