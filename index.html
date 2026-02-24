@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Reader Minimalis</title>
+    <title>GD Reader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body class="bg-gray-100 p-4 font-sans text-gray-800">
 
     <div class="max-w-3xl mx-auto flex flex-col gap-4">
+        <!-- Header Baru -->
+        <h1 class="text-3xl font-bold text-center text-blue-600 uppercase tracking-widest mt-2 mb-2">google drive reader</h1>
+
         <!-- Input & Tombol -->
         <div class="flex gap-2">
             <input type="text" id="url" placeholder="Paste link PDF / Google Drive di sini..." class="flex-1 p-2 border rounded">
@@ -24,74 +27,18 @@
         </div>
 
         <!-- Canvas PDF -->
-        <div class="flex justify-center bg-gray-300 overflow-auto border rounded items-start p-2">
+        <div class="flex justify-center bg-gray-300 overflow-auto border rounded items-start p-2 relative min-h-[50vh]">
+            
+            <!-- Indikator Loading -->
+            <div id="loading" class="absolute inset-0 bg-gray-300 bg-opacity-80 flex flex-col items-center justify-center hidden z-10">
+                <span class="font-bold text-2xl animate-pulse text-gray-700">Mohon tunggu...</span>
+            </div>
+
             <canvas id="pdf-canvas" class="bg-white max-w-full h-auto object-contain shadow"></canvas>
         </div>
     </div>
 
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        // State sederhana
-        let pdfDoc = null, pageNum = 1, currentUrl = '';
-        const canvas = document.getElementById('pdf-canvas');
-        const ctx = canvas.getContext('2d');
-        const apiKey = "AIzaSyDZkBrgKtAhgkJFGNsEoITyYxiG_syu0xU";
-
-        // 1. Auto-load saat web dibuka
-        window.onload = () => {
-            const saved = JSON.parse(localStorage.getItem('pdfMemori') || '{}');
-            if (saved.url) {
-                document.getElementById('url').value = saved.url;
-                loadPDF(saved.url, saved.page || 1);
-            }
-        };
-
-        // 2. Fungsi Utama Muat PDF
-        async function loadPDF(url, startPage = 1) {
-            currentUrl = url;
-            let fetchUrl = url;
-
-            // Jika link GDrive, ubah pakai API Key
-            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) fetchUrl = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media&key=${apiKey}`;
-
-            // Tarik dokumen
-            pdfDoc = await pdfjsLib.getDocument(fetchUrl).promise;
-            document.getElementById('page-count').innerText = pdfDoc.numPages;
-            
-            pageNum = Math.min(startPage, pdfDoc.numPages);
-            renderPage(pageNum);
-        }
-
-        // 3. Fungsi Gambar Halaman
-        async function renderPage(num) {
-            const page = await pdfDoc.getPage(num);
-            const viewport = page.getViewport({scale: 1.5}); // 1.5x agar cukup tajam
-            
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            await page.render({canvasContext: ctx, viewport: viewport}).promise;
-
-            // Update UI & Simpan ke memori
-            document.getElementById('page-num').innerText = num;
-            localStorage.setItem('pdfMemori', JSON.stringify({url: currentUrl, page: num}));
-        }
-
-        // 4. Aksi Tombol
-        document.getElementById('load').onclick = () => {
-            const input = document.getElementById('url').value;
-            loadPDF(input, input === currentUrl ? pageNum : 1);
-        };
-        
-        document.getElementById('prev').onclick = () => {
-            if (pageNum > 1) renderPage(--pageNum);
-        };
-        
-        document.getElementById('next').onclick = () => {
-            if (pageNum < pdfDoc.numPages) renderPage(++pageNum);
-        };
-    </script>
+    <!-- Panggilan ke file JavaScript eksternal yang benar -->
+    <script src="scripts.js"></script>
 </body>
 </html>
