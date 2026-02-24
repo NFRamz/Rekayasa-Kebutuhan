@@ -15,8 +15,13 @@
         button { -webkit-tap-highlight-color: transparent; }
         #canvas-container {
             min-height: 60vh;
-            max-height: 70vh;
+            max-height: 75vh;
             overflow: auto;
+        }
+        /* Tambahan untuk memastikan canvas responsif di perangkat mobile */
+        #pdf-canvas {
+            max-width: 100%;
+            height: auto !important;
         }
     </style>
 </head>
@@ -34,22 +39,13 @@
 
         <!-- Panel Input -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold mb-1">Link PDF (Langsung atau Google Drive)</label>
-                    <input type="text" id="file-url" placeholder="Contoh: https://drive.google.com/file/d/1ewNh.../view" 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-1">
-                        Google Drive API Key <span class="text-xs text-gray-400 font-normal">(Wajib untuk link GDrive)</span>
-                    </label>
-                    <input type="password" id="api-key" placeholder="Masukkan API Key GCP Anda" 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
+            <div>
+                <label class="block text-sm font-semibold mb-2">Link PDF (Langsung atau Google Drive)</label>
+                <input type="text" id="file-url" placeholder="Contoh: https://drive.google.com/file/d/1ewNh.../view" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm md:text-base">
             </div>
             <div class="mt-4 flex justify-end">
-                <button id="load-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center gap-2">
+                <button id="load-btn" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors flex items-center justify-center gap-2">
                     <i class="ph ph-folder-open"></i> Buka Dokumen
                 </button>
             </div>
@@ -59,34 +55,34 @@
         <div id="viewer-panel" class="bg-white rounded-2xl shadow-sm border border-gray-200 hidden overflow-hidden">
             
             <!-- Toolbar Atas -->
-            <div class="bg-gray-50 border-b border-gray-200 p-4 flex justify-between items-center">
-                <div class="flex items-center gap-4">
+            <div class="bg-gray-50 border-b border-gray-200 p-3 md:p-4 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-between md:justify-start">
                     <button id="prev-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
                         <i class="ph ph-caret-left text-lg"></i>
                     </button>
-                    <span class="font-medium text-sm md:text-base">
+                    <span class="font-medium text-sm md:text-base whitespace-nowrap">
                         Halaman <span id="page-num" class="font-bold text-blue-600">0</span> dari <span id="page-count">0</span>
                     </span>
                     <button id="next-btn" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors">
                         <i class="ph ph-caret-right text-lg"></i>
                     </button>
                 </div>
-                <div>
-                    <span id="save-status" class="text-xs md:text-sm text-green-600 font-medium opacity-0 transition-opacity duration-300 flex items-center gap-1">
+                <div class="w-full md:w-auto text-center md:text-right">
+                    <span id="save-status" class="text-xs md:text-sm text-green-600 font-medium opacity-0 transition-opacity duration-300 flex items-center justify-center md:justify-end gap-1">
                         <i class="ph ph-check-circle"></i> Posisi Tersimpan
                     </span>
                 </div>
             </div>
 
             <!-- Area Canvas PDF -->
-            <div id="canvas-container" class="bg-gray-300 flex justify-center p-4 relative">
-                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-gray-300 bg-opacity-80 z-10 hidden">
+            <div id="canvas-container" class="bg-gray-200 flex justify-center p-2 md:p-4 relative">
+                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-80 z-10 hidden">
                     <div class="flex flex-col items-center gap-2">
                         <i class="ph ph-spinner-gap animate-spin text-4xl text-blue-600"></i>
-                        <span class="font-medium text-gray-700">Memuat Dokumen...</span>
+                        <span class="font-medium text-gray-700 text-sm md:text-base">Memuat Dokumen...</span>
                     </div>
                 </div>
-                <canvas id="pdf-canvas" class="shadow-lg bg-white"></canvas>
+                <canvas id="pdf-canvas" class="shadow-lg bg-white max-w-full"></canvas>
             </div>
         </div>
 
@@ -102,8 +98,7 @@
             pageNum: 1,
             pageRendering: false,
             pageNumPending: null,
-            url: '',
-            apiKey: ''
+            url: ''
         };
 
         const canvas = document.getElementById('pdf-canvas');
@@ -112,58 +107,57 @@
         const loadingIndicator = document.getElementById('loading-indicator');
         const saveStatus = document.getElementById('save-status');
 
-        // 1. Fungsi Dijalankan Saat Web Pertama Dibuka
+        // 1. Memuat state saat halaman dibuka
         window.onload = function() {
             const savedData = localStorage.getItem('smartPdfReaderState');
             if (savedData) {
                 const parsed = JSON.parse(savedData);
                 document.getElementById('file-url').value = parsed.url || '';
-                document.getElementById('api-key').value = parsed.apiKey || '';
                 
                 if (parsed.url) {
-                    // Jika ada data tersimpan, langsung proses muat dokumen
                     state.pageNum = parsed.page || 1;
-                    loadDocument(parsed.url, parsed.apiKey, state.pageNum);
+                    loadDocument(parsed.url, state.pageNum);
                 }
-            } else {
-                // Link default untuk demonstrasi (CORS friendly)
-                document.getElementById('file-url').value = 'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf';
             }
         };
 
-        // 2. Fungsi Menyimpan Posisi ke Memori Browser
+        // 2. Fungsi Menyimpan Posisi ke Memori
         function saveState() {
             if(!state.url) return;
             localStorage.setItem('smartPdfReaderState', JSON.stringify({
                 url: state.url,
-                apiKey: state.apiKey,
                 page: state.pageNum
             }));
 
-            // Tampilkan animasi kecil "Posisi Tersimpan"
             saveStatus.classList.remove('opacity-0');
             setTimeout(() => saveStatus.classList.add('opacity-0'), 2000);
         }
 
-        // 3. Logika Utama Memuat Dokumen
-        async function loadDocument(inputUrl, apiKey, startPage = 1) {
+        // 3. Logika Memuat Dokumen
+        async function loadDocument(inputUrl, startPage = 1) {
             if (!inputUrl) return alert("Masukkan link PDF terlebih dahulu!");
 
             state.url = inputUrl;
-            state.apiKey = apiKey;
             let fetchUrl = inputUrl;
 
-            // Deteksi jika pengguna memasukkan link Google Drive biasa
+            // Jika link dari Google Drive, gunakan API Key yang di-hardcode
             const gdriveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
             const match = inputUrl.match(gdriveRegex);
             
             if (match) {
-                if (!apiKey) {
-                    alert("Untuk link Google Drive, Anda WAJIB memasukkan API Key Google Cloud di kolom yang disediakan. Jika tidak, file akan diblokir oleh keamanan browser (CORS).");
+                const fileId = match[1];
+                
+                // ==========================================
+                // MASUKKAN API KEY GOOGLE CLOUD ANDA DI SINI
+                // ==========================================
+                const apiKey = "GANTI_TEKS_INI_DENGAN_API_KEY_ANDA";
+                
+                if (apiKey === "GANTI_TEKS_INI_DENGAN_API_KEY_ANDA") {
+                    alert("Developer: Anda belum mengatur API Key di dalam kode sumber!");
                     return;
                 }
-                // Ubah link web menjadi link akses file via Google Drive API
-                const fileId = match[1];
+
+                // Mengambil file langsung ke Google Drive API dengan API key hardcode
                 fetchUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
             }
 
@@ -176,7 +170,6 @@
                 
                 document.getElementById('page-count').textContent = state.pdfDoc.numPages;
                 
-                // Pastikan halaman tidak melebihi total halaman
                 if (startPage > state.pdfDoc.numPages) startPage = state.pdfDoc.numPages;
                 state.pageNum = startPage;
                 
@@ -186,16 +179,16 @@
                 console.error(error);
                 loadingIndicator.classList.add('hidden');
                 viewerPanel.classList.add('hidden');
-                alert("Gagal memuat PDF.\nPastikan link benar, status file Publik, dan API Key Anda valid/memiliki izin akses.");
+                alert("Gagal memuat PDF.\nPastikan link benar dan file Google Drive bersifat Publik.");
             }
         }
 
-        // 4. Merender (Menggambar) Halaman ke Canvas
+        // 4. Merender Halaman
         function renderPage(num) {
             state.pageRendering = true;
             
             state.pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({scale: 1.5}); // Skala 1.5x agar tidak blur
+                const viewport = page.getViewport({scale: 2.0}); 
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
@@ -203,9 +196,8 @@
                     canvasContext: ctx,
                     viewport: viewport
                 };
-                const renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
+                
+                page.render(renderContext).promise.then(function() {
                     state.pageRendering = false;
                     if (state.pageNumPending !== null) {
                         renderPage(state.pageNumPending);
@@ -214,14 +206,11 @@
                 });
             });
 
-            // Update UI & Simpan State
             document.getElementById('page-num').textContent = num;
-            
-            // Atur status tombol prev/next
             document.getElementById('prev-btn').disabled = num <= 1;
             document.getElementById('next-btn').disabled = num >= state.pdfDoc.numPages;
 
-            saveState(); // Eksekusi penyimpanan otomatis setiap kali pindah halaman
+            saveState();
         }
 
         function queueRenderPage(num) {
@@ -232,7 +221,7 @@
             }
         }
 
-        // 5. Event Listeners untuk Interaksi
+        // 5. Event Listeners
         document.getElementById('prev-btn').addEventListener('click', () => {
             if (state.pageNum <= 1) return;
             state.pageNum--;
@@ -247,15 +236,11 @@
 
         document.getElementById('load-btn').addEventListener('click', () => {
             const inputUrl = document.getElementById('file-url').value;
-            const apiKey = document.getElementById('api-key').value;
-            
-            // Reset ke halaman 1 jika pengguna membuka buku/URL yang berbeda dari sebelumnya
             if (inputUrl !== state.url) {
                 state.pageNum = 1;
             }
-            loadDocument(inputUrl, apiKey, state.pageNum);
+            loadDocument(inputUrl, state.pageNum);
         });
-
     </script>
 </body>
 </html>
