@@ -29,14 +29,18 @@
 
     <div class="bg-white p-6 rounded-xl shadow-md mb-6">
         <h1 class="text-2xl font-bold mb-2 text-indigo-600">Pembaca PDF via Jalur Gambar</h1>
-        <p class="text-sm text-gray-600 mb-4">Aplikasi ini memanipulasi parameter <code>page=</code> pada link gambar internal Google Drive. Masukkan link panjang (viewer/img) yang Anda temukan.</p>
+        <p class="text-sm text-gray-600 mb-4">Aplikasi ini akan mengekstrak token gambar internal dari Google Drive. Masukkan <b>Link Google Drive biasa</b>, atau link panjang <b>viewer/img</b>.</p>
         
         <div class="flex flex-col gap-3">
-            <input type="text" id="img-link" placeholder="Paste link https://drive.google.com/viewer/img?id=..." 
+            <input type="text" id="drive-input" placeholder="Paste link https://drive.google.com/file/d/.../view" 
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-            <button id="load-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 w-full md:w-auto self-start">
-                Muat Dokumen
+            <button id="load-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 w-full md:w-auto self-start flex items-center gap-2">
+                <span>Muat Dokumen</span>
             </button>
+        </div>
+        
+        <div id="status-msg" class="text-sm text-indigo-600 font-medium mt-3 hidden">
+            Sedang mengekstrak token rahasia dari Google Drive...
         </div>
     </div>
 
@@ -64,8 +68,9 @@
         <!-- Area Gambar Dokumen -->
         <div id="viewer-container">
             <img id="document-image" src="" alt="Halaman Dokumen" class="hidden">
-            <div id="error-msg" class="hidden text-red-500 font-medium py-10 text-center">
-                Gagal memuat gambar. Token link mungkin sudah kedaluwarsa. Silakan ambil link gambar yang baru dari Google Drive.
+            <div id="error-msg" class="hidden text-red-500 font-medium py-10 text-center flex flex-col items-center gap-2">
+                <span>Gagal memuat gambar atau Token link sudah kedaluwarsa.</span>
+                <span class="text-sm text-gray-600 font-normal">Jika mengekstrak link otomatis gagal karena diblokir Google, silakan ambil link gambar (viewer/img...) secara manual dari tab Network dan paste ke atas.</span>
             </div>
         </div>
     </div>
@@ -75,41 +80,104 @@
         let currentPage = 1;
         let originalUrlObj = null;
 
-        const imgLinkInput = document.getElementById('img-link');
+        const driveInput = document.getElementById('drive-input');
         const documentImage = document.getElementById('document-image');
         const pageJumpInput = document.getElementById('page-jump');
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMsg = document.getElementById('error-msg');
+        const statusMsg = document.getElementById('status-msg');
+        const loadBtn = document.getElementById('load-btn');
+        const readerWorkspace = document.getElementById('reader-workspace');
 
-        function initReader() {
-            const rawLink = imgLinkInput.value.trim();
-            if (!rawLink || !rawLink.includes('viewer/img')) {
-                alert("Harap masukkan link gambar yang valid (dimulai dengan https://drive.google.com/viewer/img...)");
+        async function initReader() {
+            const rawLink = driveInput.value.trim();
+            if (!rawLink) {
+                alert("Harap masukkan link Google Drive!");
                 return;
             }
 
+            readerWorkspace.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+
+            // Cek apakah yang dimasukkan adalah link panjang (jalur gambar manual)
+            if (rawLink.includes('viewer/img')) {
+                processLongLink(rawLink);
+            } 
+            // Cek apakah yang dimasukkan adalah link standar Google Drive
+            else if (rawLink.includes('drive.google.com/file/d/')) {
+                await extractTokenAndLoad(rawLink);
+            } 
+            else {
+                alert("Format link tidak dikenali. Pastikan itu adalah link Google Drive.");
+            }
+        }
+
+        // ALUR 1: Memproses Link Ekstraksi Otomatis
+        async function extractTokenAndLoad(standardUrl) {
+            statusMsg.classList.remove('hidden');
+            loadBtn.disabled = true;
+            loadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
             try {
-                originalUrlObj = new URL(rawLink);
+                // Menggunakan proxy untuk menghindari blokir CORS
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(standardUrl)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (!data.contents) throw new Error("Gagal mengambil data dari proxy");
+
+                // Mencari pola token ACFrOg... dari kode sumber HTML/Payload
+                const tokenMatch = data.contents.match(/(ACFrOg[a-zA-Z0-9_-]+)/);
+                
+                if (tokenMatch && tokenMatch[1]) {
+                    console.log("Token berhasil ditemukan!", tokenMatch[1]);
+                    
+                    // Rakit URL gambar internal yang baru
+                    const generatedUrl = `https://drive.google.com/viewer/img?id=${tokenMatch[1]}&w=800&webp=true`;
+                    
+                    statusMsg.innerText = "Token berhasil diekstrak! Memuat halaman...";
+                    setTimeout(() => statusMsg.classList.add('hidden'), 2000);
+                    
+                    processLongLink(generatedUrl);
+                } else {
+                    throw new Error("Pola Token tidak ditemukan dalam payload");
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusMsg.classList.add('hidden');
+                alert("Sistem keamanan Google memblokir ekstraksi otomatis. Silakan cari link 'viewer/img' secara manual melalui tab Network browser Anda dan paste di kotak input.");
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                statusMsg.innerText = "Sedang mengekstrak token rahasia dari Google Drive...";
+            }
+        }
+
+        // ALUR 2: Memproses Eksekusi Tampilan Gambar
+        function processLongLink(imageUrl) {
+            try {
+                originalUrlObj = new URL(imageUrl);
                 // Ekstrak Token ID unik (ACFrOg...) sebagai kunci penyimpanan
                 currentFileToken = originalUrlObj.searchParams.get('id'); 
                 
                 if (!currentFileToken) throw new Error("ID tidak ditemukan di link");
 
-                document.getElementById('reader-workspace').classList.remove('hidden');
+                readerWorkspace.classList.remove('hidden');
 
                 // Cek apakah ada halaman terakhir yang tersimpan untuk token ini
                 const savedPage = localStorage.getItem(`img_reader_${currentFileToken}`);
                 if (savedPage) {
                     currentPage = parseInt(savedPage, 10);
                 } else {
-                    // Jika tidak ada memori, ambil angka page dari link yang dipaste
+                    // Jika tidak ada memori, ambil angka page dari link atau mulai dari 1
                     currentPage = parseInt(originalUrlObj.searchParams.get('page') || 1, 10);
                 }
 
                 renderImage();
 
             } catch (e) {
-                alert("Link tidak valid. Pastikan Anda meng-copy link secara utuh.");
+                alert("Link tidak valid. Pastikan format link benar.");
             }
         }
 
@@ -171,6 +239,10 @@
         });
 
         document.getElementById('load-btn').addEventListener('click', initReader);
+        
+        driveInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') initReader();
+        });
     </script>
 </body>
 </html>
