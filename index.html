@@ -7,27 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
-<body class="bg-gray-100 p-4 font-sans text-gray-800">
+    
+<body class="bg-black-100 p-4 font-sans text-gray-800">
 
     <div class="max-w-3xl mx-auto flex flex-col gap-4">
-        <h1 class="text-3xl font-bold text-center text-blue-600 uppercase tracking-widest mt-2 mb-2">GD Reader</h1>
+        <h1 class="text-3xl font-bold text-center text-blue-600 mt-2 mb-2">GD Reader</h1>
         
         <div class="flex gap-2">
-            <input type="text" id="url" placeholder="Paste link PDF / Google Drive di sini..." class="flex-1 p-2 border rounded">
-            <button id="load" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Buka</button>
+            <input  class="flex-1 p-2 border rounded" type="text" id="url" placeholder="Paste link PDF / Google Drive di sini..." >
+            <button class="bg-blue-600 text-white px-4 py-2 rounded font-bold" id="load">Buka</button>
         </div>
 
         <div class="flex justify-between items-center bg-white p-2 border rounded">
-            <button id="prev" class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300"><</button>
+            <button class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300" id="prev"><</button>
             <span>Halaman <b id="page-num">0</b> / <span id="page-count">0</span></span>
-            <button id="next" class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300">></button>
+            <button class="bg-gray-200 px-4 py-1 rounded font-bold hover:bg-gray-300" id="next">></button>
         </div>
 
         <div class="flex justify-center bg-gray-300 overflow-auto border rounded items-start p-2 relative min-h-[50vh]">
-            <div id="loading" class="absolute inset-0 bg-gray-300 bg-opacity-80 flex flex-col items-center justify-center hidden z-10">
+            <div class="absolute bg-gray-300 bg-opacity-80 flex flex-col items-center justify-center hidden z-10" id="loading">
                 <span class="font-bold text-2xl animate-pulse text-gray-700">Mohon tunggu...</span>
             </div>
-            <canvas id="pdf-canvas" class="bg-white max-w-full h-auto object-contain shadow"></canvas>
+            <canvas class="bg-white max-w-full h-auto object-contain shadow" id="pdf-canvas"></canvas>
         </div>
     </div>
     <script src="scripts.js"></script>
