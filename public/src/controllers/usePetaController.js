@@ -1,42 +1,44 @@
 import { useState, useEffect } from 'react';
 
 export const usePetaController = (alumniDB) => {
-  const [aggregatedCities, setAggregatedCities] = useState([]);
+  const [filterKampus, setFilterKampus] = useState('Universitas Muhammadiyah Malang');
+  const [aggregatedMapData, setAggregatedMapData] = useState([]);
+
+  const geocodeDB = {
+    'malang': { lat: -7.98, lng: 112.63 },
+    'pamekasan': { lat: -7.16, lng: 113.48 },
+    'surabaya': { lat: -7.25, lng: 112.75 },
+    'jakarta': { lat: -6.20, lng: 106.81 }
+  };
 
   useEffect(() => {
-    const verifiedAlumni = alumniDB.filter(a => a.status === 'Terverifikasi');
-    const cityData = {};
+    const verifiedAlumni = alumniDB.filter(a => a.status === 'Terverifikasi' && a.kampus.toLowerCase().includes(filterKampus.toLowerCase()));
+    const cityCount = {};
 
     verifiedAlumni.forEach(alumni => {
       const parts = alumni.alamat.split(',');
-      let kota = parts[parts.length - 1].trim();
-      kota = kota.replace(/Kab\.|Kota/gi, '').trim();
+      let extractedCity = parts[parts.length - 1].trim().toLowerCase();
+      extractedCity = extractedCity.replace(/(kota|kabupaten|kab\.)/g, '').trim();
 
-      if (!cityData[kota]) {
-        cityData[kota] = { nama: kota, jumlah: 0, lats: [], lngs: [] };
+      if (!cityCount[extractedCity]) {
+        cityCount[extractedCity] = { nama: extractedCity, jumlah: 0 };
       }
-      cityData[kota].jumlah += 1;
-      if (alumni.lat) cityData[kota].lats.push(alumni.lat);
-      if (alumni.lng) cityData[kota].lngs.push(alumni.lng);
+      cityCount[extractedCity].jumlah += 1;
     });
 
-    const parsedData = Object.values(cityData).map(city => ({
-      ...city,
-      lat: city.lats.reduce((a, b) => a + b, 0) / city.lats.length || -7.5,
-      lng: city.lngs.reduce((a, b) => a + b, 0) / city.lngs.length || 112.5
-    }));
+    const mapData = Object.values(cityCount).map(city => {
+      const coords = geocodeDB[city.nama] || { lat: -7.5 + (Math.random()), lng: 112.5 + (Math.random()) };
+      return { ...city, lat: coords.lat, lng: coords.lng };
+    });
 
-    setAggregatedCities(parsedData);
-  }, [alumniDB]);
+    setAggregatedMapData(mapData);
+  }, [alumniDB, filterKampus]);
 
   const hitungPosisiPeta = (lat, lng) => {
     const x = ((lng - 111.0) / 4.0) * 100;
     const y = ((lat - (-6.5)) / (-2.5)) * 100; 
-    return {
-      left: `${Math.max(5, Math.min(95, x))}%`,
-      top: `${Math.max(5, Math.min(95, y))}%`
-    };
+    return { left: `${Math.max(5, Math.min(95, x))}%`, top: `${Math.max(5, Math.min(95, y))}%` };
   };
 
-  return { aggregatedCities, hitungPosisiPeta };
+  return { filterKampus, setFilterKampus, aggregatedMapData, hitungPosisiPeta };
 };
