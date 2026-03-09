@@ -1,14 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const useAppModel = () => {
-  // Data Dummy Hardcode (Nanti diganti dengan fetch dari Supabase)
   const [alumniDB, setAlumniDB] = useState([
-    { id: 1, nama: 'Budi Santoso', nim: '201910370311001', prodi: 'Informatika', tahun: '2023', pekerjaan: 'Software Engineer', instansi: 'PT GoTo', alamat: 'Kec. Lowokwaru, Kota Malang', lat: -7.950, lng: 112.610, status: 'Terverifikasi' },
-    { id: 2, nama: 'Siti Aminah', nim: '201810370311045', prodi: 'Informatika', tahun: '2022', pekerjaan: 'Data Analyst', instansi: 'Bank Mandiri', alamat: 'Kec. Pakong, Kab. Pamekasan', lat: -7.054, lng: 113.568, status: 'Terverifikasi' },
-    { id: 3, nama: 'Ahmad Faisal', nim: '202010370311099', prodi: 'Sistem Informasi', tahun: '2024', pekerjaan: 'UI/UX Designer', instansi: 'Ruangguru', alamat: 'Kec. Blimbing, Kota Malang', lat: -7.932, lng: 112.650, status: 'Terverifikasi' },
-    { id: 4, nama: 'Dewi Lestari', nim: '201710370311012', prodi: 'Teknik Komputer', tahun: '2021', pekerjaan: 'Network Engineer', instansi: 'Telkom Indonesia', alamat: 'Kec. Gubeng, Kota Surabaya', lat: -7.280, lng: 112.750, status: 'Terverifikasi' },
-    { id: 5, nama: 'Andi Pratama', nim: '202110370311005', prodi: 'Informatika', tahun: '2025', pekerjaan: 'Backend Developer', instansi: 'Traveloka', alamat: 'Kec. Klojen, Kota Malang', lat: -7.970, lng: 112.630, status: 'Menunggu Verifikasi' }
+    { id: 1, nama: 'Naufal Ramzi', nim: '202310370311026', prodi: 'Informatika', kampus: 'Universitas Muhammadiyah Malang', tahun: '2024', pekerjaan: 'UI/UX Designer', instansi: 'Ruangguru', alamat: 'Kec. Blimbing, Kota Malang', status: 'Terverifikasi' },
+    { id: 2, nama: 'Siti Aminah', nim: '201810370311045', prodi: 'Informatika', kampus: 'Universitas Muhammadiyah Malang', tahun: '2022', pekerjaan: 'Data Analyst', instansi: 'Bank Mandiri', alamat: 'Kec. Pakong, Kab. Pamekasan', status: 'Terverifikasi' },
+    { id: 3, nama: 'Andika Wahyu', nim: '202110370311005', prodi: 'Ilmu Komunikasi', kampus: 'Universitas Brawijaya', tahun: '2025', pekerjaan: 'Backend Developer', instansi: 'Traveloka', alamat: 'Kec. Gubeng, Kota Surabaya', status: 'Terverifikasi' },
+    { id: 4, nama: 'Budi Santoso', nim: '201910370311001', prodi: 'Informatika', kampus: 'Universitas Muhammadiyah Malang', tahun: '2023', pekerjaan: 'Software Engineer', instansi: 'PT GoTo', alamat: 'Kec. Lowokwaru, Kota Malang', status: 'Menunggu Verifikasi' }
   ]);
+
+  useEffect(() => {
+    if (USE_SUPABASE) {
+      fetch(`${SUPABASE_URL}/rest/v1/alumni?select=*`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      })
+      .then(res => res.json())
+      .then(data => { if(data && !data.error) setAlumniDB(data) })
+      .catch(err => console.error("Gagal koneksi ke Supabase:", err));
+    }
+  }, []);
 
   return { alumniDB, setAlumniDB };
 };
