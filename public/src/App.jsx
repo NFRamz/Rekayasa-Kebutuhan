@@ -13,11 +13,13 @@ import AdminView from './views/AdminView';
 export default function App() {
   const [activeTab, setActiveTab] = useState('pencarian');
   
-  // Inisialisasi Model / Database
+  // Inisialisasi Model Data (Mengeksekusi Data Dummy / Fetch Supabase)
   const { alumniDB, setAlumniDB } = useAppModel();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-800">
+      
+      {/* Sidebar Navigasi */}
       <nav className="bg-blue-900 text-white w-full md:w-64 flex-shrink-0 shadow-lg md:min-h-screen">
         <div className="p-6">
           <h1 className="text-2xl font-bold tracking-wider">Alumni<span className="text-blue-400">Track</span></h1>
@@ -30,13 +32,14 @@ export default function App() {
         </div>
       </nav>
 
+      {/* Konten Utama */}
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-        {/* Router Sederhana: Me-render View berdasarkan Tab aktif */}
         {activeTab === 'pencarian' && <PencarianView alumniDB={alumniDB} />}
         {activeTab === 'peta' && <PetaView alumniDB={alumniDB} />}
         {activeTab === 'pendataan' && <PendataanView alumniDB={alumniDB} setAlumniDB={setAlumniDB} />}
         {activeTab === 'admin' && <AdminView alumniDB={alumniDB} setAlumniDB={setAlumniDB} />}
       </main>
+
     </div>
   );
 }
