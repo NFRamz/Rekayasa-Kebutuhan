@@ -7,9 +7,9 @@ export default function AdminView({ alumniDB, setAlumniDB }) {
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <ShieldCheck className="text-blue-600" /> Verifikasi Data Admin
-      </h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2"><ShieldCheck className="text-blue-600" /> Dashboard Verifikasi Admin</h2>
+      <p className="text-sm text-gray-500 mb-6">Fase A.2: Admin memvalidasi (NIM/KTP) untuk memastikan alumni asli.</p>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="w-full text-left text-sm text-gray-600">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -26,7 +26,7 @@ export default function AdminView({ alumniDB, setAlumniDB }) {
                   <button onClick={() => verifyAlumni(item.id, false)} className="bg-red-100 text-red-700 px-3 py-1.5 rounded-md text-xs font-bold">Tolak</button>
                 </td>
               </tr>
-            )) : <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500">Kosong.</td></tr>}
+            )) : <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500">Tidak ada antrean pendataan baru.</td></tr>}
           </tbody>
         </table>
       </div>
