@@ -1,9 +1,20 @@
 import React from 'react';
-import { MapPin, Globe, Filter } from 'lucide-react';
+import { MapPin, Filter } from 'lucide-react';
 import { usePetaController } from '../controllers/usePetaController';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix bug bawaan dari react-leaflet untuk icon marker
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '[https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png](https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png)',
+  iconUrl: '[https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png](https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png)',
+  shadowUrl: '[https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png](https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png)',
+});
 
 export default function PetaView({ alumniDB }) {
-  const { filterKampus, setFilterKampus, aggregatedMapData, hitungPosisiPeta } = usePetaController(alumniDB);
+  const { filterKampus, setFilterKampus, aggregatedMapData } = usePetaController(alumniDB);
 
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -15,22 +26,24 @@ export default function PetaView({ alumniDB }) {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="relative h-[450px] w-full rounded-lg overflow-hidden border border-blue-200 shadow-inner bg-blue-50/50">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-          <div className="absolute top-4 left-4 bg-white/90 px-3 py-1.5 rounded-md text-xs font-bold text-blue-800 shadow-sm z-10">Peta Geocoding: Area Jawa Timur</div>
-          
-          {aggregatedMapData.map((city, idx) => {
-            const pos = hitungPosisiPeta(city.lat, city.lng);
-            return (
-              <div key={idx} className="absolute transform -translate-x-1/2 -translate-y-full z-20 flex flex-col items-center group" style={pos}>
-                <MapPin className="text-red-600 drop-shadow-md group-hover:scale-110 transition-transform" size={42} fill="#fee2e2" />
-                <div className="mt-1 bg-white/95 text-blue-900 font-bold text-xs pl-2 pr-1 py-1 rounded-full shadow-md border border-blue-200 flex items-center gap-1.5 capitalize">
-                  <span>{city.nama}</span>
-                  <span className="bg-red-500 text-white px-1.5 py-0.5 rounded-full text-[10px] leading-none">{city.jumlah}</span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="h-[450px] w-full rounded-lg overflow-hidden border border-gray-200 shadow-inner z-0">
+          <MapContainer center={[-7.5, 112.5]} zoom={7} scrollWheelZoom={true} style={{ height: '100%', width: '100%', zIndex: 0 }}>
+            <TileLayer
+              attribution='&copy; <a href="[https://www.openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            
+            {aggregatedMapData.map((city, idx) => (
+              <Marker key={idx} position={[city.lat, city.lng]}>
+                <Popup>
+                  <div className="text-center">
+                    <strong className="text-blue-700 capitalize text-base">{city.nama}</strong><br />
+                    <span className="text-gray-600 font-medium">Jumlah Alumni: {city.jumlah}</span>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
       </div>
     </div>
