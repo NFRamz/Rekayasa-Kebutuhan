@@ -1,32 +1,71 @@
 import { useState } from 'react';
 
 export const usePencarianController = (alumniDB) => {
-  const [query, setQuery] = useState('');
+  const [queryNama, setQueryNama] = useState('');
+  const [queryAfiliasi, setQueryAfiliasi] = useState('');
+  const [queryKonteks, setQueryKonteks] = useState('');
+  
   const [isSearching, setIsSearching] = useState(false);
   const [internalResults, setInternalResults] = useState([]);
   const [externalResults, setExternalResults] = useState([]);
 
-  const executeSearch = (e) => {
+  const executeSearch = async (e) => {
     e.preventDefault();
-    if (!query) return;
+    if (!queryNama) return;
     setIsSearching(true);
+    setExternalResults([]);
 
     const filteredDB = alumniDB.filter(a => 
       a.status === 'Terverifikasi' && 
-      (a.nama.toLowerCase().includes(query.toLowerCase()) || a.prodi.toLowerCase().includes(query.toLowerCase()))
+      a.nama.toLowerCase().includes(queryNama.toLowerCase())
     );
+    setInternalResults(filteredDB);
     
-    // Simulasi delay API
-    setTimeout(() => {
-      setInternalResults(filteredDB);
-      const mockExternal = [
-        { source: 'PDDIKTI API', title: `Data Mahasiswa Lulus: ${query}`, desc: `Lulusan Informatika. Status: Lulus.`, link: '#' },
-        { source: 'LinkedIn API', title: `${query} - Profesional`, desc: `Bekerja di industri teknologi.`, link: '#' }
-      ];
-      setExternalResults(mockExternal);
+    let fetchedExternal = [];
+    const combinedQuery = `${queryNama} ${queryKonteks} ${queryAfiliasi}`.trim();
+    const q = encodeURIComponent(combinedQuery);
+    
+    try {
+      const [pddiktiRes, githubRes, googleRes, orcidRes] = await Promise.allSettled([
+        fetch(`https://api.ryzumi.net/api/search/mahasiswa?query=${encodeURIComponent(queryNama)}`).then(res => res.json()),
+        fetch(`https://api.github.com/search/users?q=${encodeURIComponent(queryNama)}`).then(res => res.json()),
+        fetch(`https://api.ryzumi.net/api/search/gimage?query=${q}`).then(res => res.json()),
+        fetch(`https://pub.orcid.org/v3.0/search?q=${encodeURIComponent(queryNama)}`, { headers: { 'Accept': 'application/json' } }).then(res => res.text())
+      ]);
+
+      if (pddiktiRes.status === 'fulfilled' && Array.isArray(pddiktiRes.value)) {
+        pddiktiRes.value.slice(0, 3).forEach(item => {
+          fetchedExternal.push({ source: 'PDDIKTI', title: item.nama, desc: `Kampus: ${item.nama_pt} | Prodi: ${item.nama_prodi} | NIM: ${item.nim}`, link: '#' });
+        });
+      }
+
+      if (githubRes.status === 'fulfilled' && githubRes.value.items) {
+        githubRes.value.items.slice(0, 3).forEach(item => {
+          fetchedExternal.push({ source: 'GitHub', title: `@${item.login}`, desc: `Profil Developer`, link: item.html_url, image: item.avatar_url });
+        });
+      }
+
+      if (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) {
+        googleRes.value.slice(0, 3).forEach(item => {
+          fetchedExternal.push({ source: 'Google Web', title: item.title, desc: item.url, link: item.url, image: item.image });
+        });
+      }
+
+      if (orcidRes.status === 'fulfilled' && orcidRes.value) {
+        try {
+          const data = JSON.parse(orcidRes.value);
+          if (data && data.result) {
+            data.result.slice(0, 2).forEach(item => fetchedExternal.push({ source: 'ORCID', title: 'Profil Peneliti', desc: item['orcid-identifier'].path, link: item['orcid-identifier'].uri }));
+          }
+        } catch(e) {}
+      }
+    } catch (error) {
+      console.error("Error API:", error);
+    } finally {
+      setExternalResults(fetchedExternal);
       setIsSearching(false);
-    }, 1500);
+    }
   };
 
-  return { query, setQuery, isSearching, internalResults, externalResults, executeSearch };
+  return { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch };
 };
