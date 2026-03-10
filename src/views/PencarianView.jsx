@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Database, Globe } from 'lucide-react';\
+import { Search, Database, Globe } from 'lucide-react';
 
 export default function PencarianView({ alumniDB = [] }) {
   const { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch } = usePencarianController(alumniDB);
