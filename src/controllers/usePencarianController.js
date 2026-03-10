@@ -6,7 +6,8 @@ const API_GITHUB = import.meta.env.VITE_API_GITHUB;
 const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
 const API_ORCID = import.meta.env.VITE_API_ORCID;
 
-const usePencarianController = (alumniDB = []) => {
+// PASTIKAN ADA KATA "export" DI SINI AGAR TIDAK ERROR DI VERCEL
+export const usePencarianController = (alumniDB = []) => {
   const [queryNama, setQueryNama] = useState('');
   const [queryAfiliasi, setQueryAfiliasi] = useState('');
   const [queryKonteks, setQueryKonteks] = useState('');
