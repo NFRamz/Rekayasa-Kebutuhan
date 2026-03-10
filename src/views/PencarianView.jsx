@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Database, Globe } from 'lucide-react';
-import { usePencarianController } from '../controllers/usePencarianController';
+
 
 export default function PencarianView({ alumniDB = [] }) {
   const { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch } = usePencarianController(alumniDB);
@@ -59,10 +59,10 @@ export default function PencarianView({ alumniDB = [] }) {
             {isSearching ? (
               <div className="text-center py-12 text-gray-400 animate-pulse bg-white rounded-xl border border-gray-100">Melacak PDDIKTI, GitHub, Google, & ORCID...</div>
             ) : (
-
+              // Mengubah grid layout menjadi 4 kolom (lg:grid-cols-4)
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                 {Object.entries(groupedExternal).map(([source, items]) => (
-
+                  // Mengunci tinggi tiap box persis 400px (h-[400px]) agar bisa discroll di dalamnya
                   <div key={source} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
                     
                     <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3 shrink-0">
@@ -70,6 +70,7 @@ export default function PencarianView({ alumniDB = [] }) {
                       <span className="text-[10px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">{items.length} Ditemukan</span>
                     </div>
                     
+                    {/* Area bisa di-scroll secara internal dan tidak memanjangkan halaman */}
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                       {items.map((item, idx) => (
                         <a key={idx} href={item.link !== '#' ? item.link : undefined} target="_blank" rel="noopener noreferrer" 
