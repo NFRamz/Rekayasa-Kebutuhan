@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-// Konfigurasi API Publik dari Environment (dengan fallback/default URL jika env kosong)
+// Konfigurasi API
 const API_PDDIKTI = import.meta.env.VITE_API_PDDIKTI;
 const API_GITHUB = import.meta.env.VITE_API_GITHUB;
 const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
