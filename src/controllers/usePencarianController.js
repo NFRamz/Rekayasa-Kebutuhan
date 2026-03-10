@@ -1,5 +1,11 @@
 import { useState } from 'react';
 
+// Konfigurasi API Publik dari Environment (dengan fallback/default URL jika env kosong)
+const API_PDDIKTI = import.meta.env.VITE_API_PDDIKT;
+const API_GITHUB = import.meta.env.VITE_API_GITHUB || 'https://api.github.com/search/users';
+const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG || 'https://api.ryzumi.net/api/search/gimage';
+const API_ORCID = import.meta.env.VITE_API_ORCID || 'https://pub.orcid.org/v3.0/search';
+
 export const usePencarianController = (alumniDB) => {
   const [queryNama, setQueryNama] = useState('');
   const [queryAfiliasi, setQueryAfiliasi] = useState('');
@@ -27,10 +33,10 @@ export const usePencarianController = (alumniDB) => {
     
     try {
       const [pddiktiRes, githubRes, googleRes, orcidRes] = await Promise.allSettled([
-        fetch(`https://api.ryzumi.net/api/search/mahasiswa?query=${encodeURIComponent(queryNama)}`).then(res => res.json()),
-        fetch(`https://api.github.com/search/users?q=${encodeURIComponent(queryNama)}`).then(res => res.json()),
-        fetch(`https://api.ryzumi.net/api/search/gimage?query=${q}`).then(res => res.json()),
-        fetch(`https://pub.orcid.org/v3.0/search?q=${encodeURIComponent(queryNama)}`, { headers: { 'Accept': 'application/json' } }).then(res => res.text())
+        fetch(`${API_PDDIKTI}?query=${encodeURIComponent(queryNama)}`).then(res => res.json()),
+        fetch(`${API_GITHUB}?q=${encodeURIComponent(queryNama)}`).then(res => res.json()),
+        fetch(`${API_GOOGLE_IMG}?query=${q}`).then(res => res.json()),
+        fetch(`${API_ORCID}?q=${encodeURIComponent(queryNama)}`, { headers: { 'Accept': 'application/json' } }).then(res => res.text())
       ]);
 
       if (pddiktiRes.status === 'fulfilled' && Array.isArray(pddiktiRes.value)) {
