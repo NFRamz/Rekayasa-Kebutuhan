@@ -1,18 +1,39 @@
 import { useState, useEffect } from 'react';
 
+/**
+ * Controller untuk mengelola state dan logika pemetaan sebaran alumni.
+ * Menangani filter afiliasi dan agregasi data spasial.
+ */
 export const usePetaController = (alumniDB) => {
-  const [filterKampus, setFilterKampus] = useState('Universitas Muhammadiyah Malang');
+  const [filterKampus, setFilterKampus] = useState('');
   const [aggregatedMapData, setAggregatedMapData] = useState([]);
+
+  const availableCampuses = [...new Set(alumniDB
+    .filter(a => a.status === 'Terverifikasi' && a.kampus)
+    .map(a => a.kampus)
+  )];
 
   const geocodeDB = {
     'malang': { lat: -7.98, lng: 112.63 },
     'pamekasan': { lat: -7.16, lng: 113.48 },
     'surabaya': { lat: -7.25, lng: 112.75 },
-    'jakarta': { lat: -6.20, lng: 106.81 }
+    'jakarta': { lat: -6.20, lng: 106.81 },
+    'yogyakarta': { lat: -7.79, lng: 110.36 }
   };
 
+  /**
+   * Mengekstrak kota dari string alamat, melakukan grouping jumlah alumni per kota,
+   * dan memetakan nama kota ke titik koordinat (mock geocoding).
+   */
   useEffect(() => {
-    const verifiedAlumni = alumniDB.filter(a => a.status === 'Terverifikasi' && a.kampus.toLowerCase().includes(filterKampus.toLowerCase()));
+    const isFilterAll = filterKampus.trim() === '' || filterKampus.toLowerCase() === 'semua';
+
+    const verifiedAlumni = alumniDB.filter(a => {
+      if (a.status !== 'Terverifikasi') return false;
+      if (isFilterAll) return true;
+      return a.kampus.toLowerCase().includes(filterKampus.toLowerCase());
+    });
+
     const cityCount = {};
 
     verifiedAlumni.forEach(alumni => {
@@ -34,11 +55,5 @@ export const usePetaController = (alumniDB) => {
     setAggregatedMapData(mapData);
   }, [alumniDB, filterKampus]);
 
-  const hitungPosisiPeta = (lat, lng) => {
-    const x = ((lng - 111.0) / 4.0) * 100;
-    const y = ((lat - (-6.5)) / (-2.5)) * 100; 
-    return { left: `${Math.max(5, Math.min(95, x))}%`, top: `${Math.max(5, Math.min(95, y))}%` };
-  };
-
-  return { filterKampus, setFilterKampus, aggregatedMapData, hitungPosisiPeta };
+  return { filterKampus, setFilterKampus, aggregatedMapData, availableCampuses };
 };
