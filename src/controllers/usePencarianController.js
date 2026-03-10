@@ -39,20 +39,21 @@ export const usePencarianController = (alumniDB) => {
         fetch(`${API_ORCID}?q=${encodeURIComponent(queryNama)}`, { headers: { 'Accept': 'application/json' } }).then(res => res.text())
       ]);
 
+      // Menampilkan SELURUH hasil tanpa dilimit (menghapus .slice)
       if (pddiktiRes.status === 'fulfilled' && Array.isArray(pddiktiRes.value)) {
-        pddiktiRes.value.slice(0, 3).forEach(item => {
+        pddiktiRes.value.forEach(item => {
           fetchedExternal.push({ source: 'PDDIKTI', title: item.nama, desc: `Kampus: ${item.nama_pt} | Prodi: ${item.nama_prodi} | NIM: ${item.nim}`, link: '#' });
         });
       }
 
       if (githubRes.status === 'fulfilled' && githubRes.value.items) {
-        githubRes.value.items.slice(0, 3).forEach(item => {
+        githubRes.value.items.forEach(item => {
           fetchedExternal.push({ source: 'GitHub', title: `@${item.login}`, desc: `Profil Developer`, link: item.html_url, image: item.avatar_url });
         });
       }
 
       if (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) {
-        googleRes.value.slice(0, 3).forEach(item => {
+        googleRes.value.forEach(item => {
           fetchedExternal.push({ source: 'Google Web', title: item.title, desc: item.url, link: item.url, image: item.image });
         });
       }
@@ -61,7 +62,7 @@ export const usePencarianController = (alumniDB) => {
         try {
           const data = JSON.parse(orcidRes.value);
           if (data && data.result) {
-            data.result.slice(0, 2).forEach(item => fetchedExternal.push({ source: 'ORCID', title: 'Profil Peneliti', desc: item['orcid-identifier'].path, link: item['orcid-identifier'].uri }));
+            data.result.forEach(item => fetchedExternal.push({ source: 'ORCID', title: 'Profil Peneliti', desc: item['orcid-identifier'].path, link: item['orcid-identifier'].uri }));
           }
         } catch(e) {}
       }
