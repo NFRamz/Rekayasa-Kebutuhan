@@ -2,9 +2,9 @@ import { useState } from 'react';
 
 // Konfigurasi API Publik dari Environment (dengan fallback/default URL jika env kosong)
 const API_PDDIKTI = import.meta.env.VITE_API_PDDIKT;
-const API_GITHUB = import.meta.env.VITE_API_GITHUB || 'https://api.github.com/search/users';
-const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG || 'https://api.ryzumi.net/api/search/gimage';
-const API_ORCID = import.meta.env.VITE_API_ORCID || 'https://pub.orcid.org/v3.0/search';
+const API_GITHUB = import.meta.env.VITE_API_GITHUB;
+const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
+const API_ORCID = import.meta.env.VITE_API_ORCID;
 
 export const usePencarianController = (alumniDB) => {
   const [queryNama, setQueryNama] = useState('');
