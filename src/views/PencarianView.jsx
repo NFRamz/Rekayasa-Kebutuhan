@@ -1,5 +1,7 @@
 import React from 'react';
-import { Search, Database, Globe } from 'lucide-react';
+// Import ikon tambahan untuk masing-masing sumber
+import { Search, Database, Globe, BookOpen, Github, User } from 'lucide-react';
+import { usePencarianController } from '../controllers/usePencarianController';
 
 export default function PencarianView({ alumniDB = [] }) {
   const { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch } = usePencarianController(alumniDB);
@@ -19,11 +21,11 @@ export default function PencarianView({ alumniDB = [] }) {
   });
 
   return (
-    // Memperlebar container (max-w-[1400px]) agar 5 kolom memiliki ruang yang cukup
-    <div className="max-w-[1400px] w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Search className="text-blue-600" /> Pencarian Jejak Alumni</h2>
+    // Max-w dibuat sangat lebar agar 5 kolom muat berdampingan dengan lega
+    <div className="max-w-[1500px] w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 px-2">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Search className="text-blue-600" /> Pencarian Jejak Alumni Terpadu</h2>
       
-      <form onSubmit={executeSearch} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 max-w-5xl">
+      <form onSubmit={executeSearch} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div><label className="text-xs font-semibold text-gray-500 uppercase">Nama Alumni *</label>
             <input required type="text" placeholder="Misal: Naufal Ramzi" className="w-full mt-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={queryNama} onChange={(e) => setQueryNama(e.target.value)} />
@@ -42,77 +44,106 @@ export default function PencarianView({ alumniDB = [] }) {
 
       {(internalResults.length > 0 || externalResults.length > 0 || isSearching) && (
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-2 text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2">
-            <Globe size={20} className="text-blue-600" /> Hasil Penelusuran Integrasi Terpusat
-          </div>
-
+          
           {isSearching ? (
-             <div className="text-center py-12 text-gray-400 animate-pulse bg-white rounded-xl border border-gray-100">Melacak Database Internal, PDDIKTI, GitHub, Google, & ORCID secara simultan...</div>
+             <div className="text-center py-12 text-blue-600 font-medium animate-pulse bg-blue-50 rounded-xl border border-blue-100">
+               Mencari data secara real-time di 5 platform sekaligus...
+             </div>
           ) : (
-            // Grid utama untuk 5 Kolom: 1 Internal + 4 Eksternal (xl:grid-cols-5)
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
+            // Mengatur layout 5 kolom berdampingan secara spesifik
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
               
               {/* KOLOM 1: DATABASE INTERNAL */}
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-green-200 flex flex-col h-[400px]">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3 shrink-0">
-                  <span className="text-[10px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-green-100 flex items-center gap-1">
-                    <Database size={12} /> Internal DB
+              <div className="bg-white rounded-xl shadow-sm border border-green-200 flex flex-col h-[450px] overflow-hidden">
+                <div className="bg-green-600 text-white p-3 flex justify-between items-center shrink-0">
+                  <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Database size={14} /> Internal DB
                   </span>
-                  <span className="text-[10px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">{internalResults.length} Ditemukan</span>
+                  <span className="text-[10px] bg-green-800 px-2 py-0.5 rounded-full">{internalResults.length}</span>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {/* Scroll mandiri pada setiap kolom */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
                   {internalResults.length > 0 ? internalResults.map(item => (
-                    <div key={item.id} className="p-2.5 rounded-xl border border-green-100 bg-green-50/40 transition-all hover:shadow-sm">
-                      <h4 className="font-bold text-xs text-gray-800 line-clamp-1" title={item.nama}>{item.nama}</h4>
-                      <p className="text-[10px] text-gray-600 font-medium mt-1 line-clamp-2" title={`${item.prodi} - ${item.kampus}`}>{item.prodi} - <span className="text-gray-500">{item.kampus}</span></p>
-                      <div className="mt-2 pt-2 border-t border-green-200/50">
-                        <p className="text-[10px] text-gray-700 line-clamp-2" title={`${item.pekerjaan} di ${item.instansi}`}><strong>Kerja:</strong> {item.pekerjaan} di {item.instansi}</p>
+                    <div key={item.id} className="p-3 rounded-lg border border-green-200 bg-white hover:shadow-md transition-shadow">
+                      <h4 className="font-bold text-sm text-gray-900 line-clamp-1" title={item.nama}>{item.nama}</h4>
+                      <p className="text-[11px] text-gray-600 font-medium mt-1 line-clamp-2">{item.prodi} - {item.kampus}</p>
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <p className="text-[11px] text-gray-700 line-clamp-2"><strong>Kerja:</strong> {item.pekerjaan} di {item.instansi}</p>
                       </div>
                     </div>
                   )) : (
-                    <p className="text-[11px] text-gray-400 text-center mt-6 px-2">Data tidak ditemukan di database internal.</p>
+                    <p className="text-xs text-gray-400 text-center mt-10">Data tidak ditemukan di database internal.</p>
                   )}
                 </div>
               </div>
 
-              {/* KOLOM 2 SAMPAI 5: SUMBER API EKSTERNAL */}
-              {Object.entries(groupedExternal).map(([source, items]) => (
-                <div key={source} className="bg-white p-4 rounded-xl shadow-sm border border-blue-200 flex flex-col h-[400px]">
-                  
-                  {/* Header Kotak Sumber API */}
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3 shrink-0">
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-100">{source}</span>
-                    <span className="text-[10px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">{items.length} Ditemukan</span>
-                  </div>
-                  
-                  {/* List Hasil (Area dengan Scroll Internal) */}
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                    {items.length > 0 ? items.map((item, idx) => (
-                      <a key={idx} href={item.link !== '#' ? item.link : undefined} target="_blank" rel="noopener noreferrer" 
-                         className={`flex gap-3 items-start p-2.5 rounded-xl border border-transparent transition-all ${item.link !== '#' ? 'hover:bg-blue-50 hover:border-blue-100 cursor-pointer shadow-sm' : 'bg-gray-50/50 cursor-default border-gray-100'}`}>
-                        
-                        {/* Gambar / Inisial Avatar */}
-                        <div className="w-8 h-8 rounded-full shrink-0 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 flex items-center justify-center font-bold text-[10px] overflow-hidden shadow-sm border border-blue-200/50">
-                          {item.image ? (
-                            <img src={item.image} alt="Profil" className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{item.title.charAt(0).toUpperCase()}</span>
-                          )}
-                        </div>
-                        
-                        {/* Teks Deskripsi */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-[11px] text-gray-800 truncate" title={item.title}>{item.title}</h4>
-                          <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-relaxed" title={item.desc}>{item.desc}</p>
-                        </div>
-                      </a>
-                    )) : (
-                      <p className="text-[11px] text-gray-400 text-center mt-6 px-2">Tidak ada kecocokan jejak digital di platform ini.</p>
-                    )}
-                  </div>
+              {/* KOLOM 2: PDDIKTI */}
+              <div className="bg-white rounded-xl shadow-sm border border-indigo-200 flex flex-col h-[450px] overflow-hidden">
+                <div className="bg-indigo-600 text-white p-3 flex justify-between items-center shrink-0">
+                  <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"><BookOpen size={14} /> PDDIKTI</span>
+                  <span className="text-[10px] bg-indigo-800 px-2 py-0.5 rounded-full">{groupedExternal['PDDIKTI'].length}</span>
                 </div>
-              ))}
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
+                  {groupedExternal['PDDIKTI'].length > 0 ? groupedExternal['PDDIKTI'].map((item, idx) => (
+                    <div key={idx} className="p-3 rounded-lg border border-indigo-100 bg-white hover:border-indigo-300 transition-colors">
+                      <h4 className="font-bold text-xs text-gray-900 line-clamp-2" title={item.title}>{item.title}</h4>
+                      <p className="text-[10px] text-gray-600 mt-1.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  )) : <p className="text-xs text-gray-400 text-center mt-10">Tidak ada rekam jejak akademik.</p>}
+                </div>
+              </div>
+
+              {/* KOLOM 3: GITHUB */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-300 flex flex-col h-[450px] overflow-hidden">
+                <div className="bg-gray-800 text-white p-3 flex justify-between items-center shrink-0">
+                  <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"><Github size={14} /> GitHub</span>
+                  <span className="text-[10px] bg-gray-900 px-2 py-0.5 rounded-full">{groupedExternal['GitHub'].length}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
+                  {groupedExternal['GitHub'].length > 0 ? groupedExternal['GitHub'].map((item, idx) => (
+                    <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow">
+                      <img src={item.image} alt="Avatar" className="w-10 h-10 rounded-full border border-gray-100 object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-xs text-gray-900 truncate" title={item.title}>{item.title}</h4>
+                        <p className="text-[10px] text-blue-600 mt-0.5">Lihat Profil &rarr;</p>
+                      </div>
+                    </a>
+                  )) : <p className="text-xs text-gray-400 text-center mt-10">Tidak ada profil developer.</p>}
+                </div>
+              </div>
+
+              {/* KOLOM 4: GOOGLE WEB */}
+              <div className="bg-white rounded-xl shadow-sm border border-blue-200 flex flex-col h-[450px] overflow-hidden">
+                <div className="bg-blue-600 text-white p-3 flex justify-between items-center shrink-0">
+                  <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"><Globe size={14} /> Google</span>
+                  <span className="text-[10px] bg-blue-800 px-2 py-0.5 rounded-full">{groupedExternal['Google Web'].length}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
+                  {groupedExternal['Google Web'].length > 0 ? groupedExternal['Google Web'].map((item, idx) => (
+                    <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg border border-blue-100 bg-white hover:border-blue-400 transition-colors">
+                      <h4 className="font-bold text-[11px] text-blue-700 line-clamp-2 leading-tight" title={item.title}>{item.title}</h4>
+                      <p className="text-[9px] text-gray-500 mt-1.5 truncate">{item.link}</p>
+                    </a>
+                  )) : <p className="text-xs text-gray-400 text-center mt-10">Tidak ada jejak website/berita.</p>}
+                </div>
+              </div>
+
+              {/* KOLOM 5: ORCID */}
+              <div className="bg-white rounded-xl shadow-sm border border-teal-200 flex flex-col h-[450px] overflow-hidden">
+                <div className="bg-teal-600 text-white p-3 flex justify-between items-center shrink-0">
+                  <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5"><User size={14} /> ORCID</span>
+                  <span className="text-[10px] bg-teal-800 px-2 py-0.5 rounded-full">{groupedExternal['ORCID'].length}</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
+                  {groupedExternal['ORCID'].length > 0 ? groupedExternal['ORCID'].map((item, idx) => (
+                    <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg border border-teal-100 bg-white hover:shadow-md transition-shadow">
+                      <h4 className="font-bold text-xs text-gray-900 truncate">{item.title}</h4>
+                      <p className="text-[10px] text-gray-500 mt-1">ID: {item.desc}</p>
+                    </a>
+                  )) : <p className="text-xs text-gray-400 text-center mt-10">Tidak ada publikasi riset.</p>}
+                </div>
+              </div>
 
             </div>
           )}
