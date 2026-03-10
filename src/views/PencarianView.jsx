@@ -12,7 +12,8 @@ export default function PencarianView({ alumniDB = [] }) {
   }, {});
 
   return (
-    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    // Memperlebar max-w menjadi 7xl agar 4 kolom tidak terlalu berdesakan
+    <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Search className="text-blue-600" /> Pencarian Jejak Alumni</h2>
       
       <form onSubmit={executeSearch} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
@@ -38,13 +39,13 @@ export default function PencarianView({ alumniDB = [] }) {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2"><Database size={18} className="text-green-600" /> Database Internal</h3>
             {internalResults.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {internalResults.map(item => (
                   <div key={item.id} className="p-5 rounded-xl border border-green-100 border-l-4 border-l-green-500 bg-green-50/30 transition-all hover:shadow-sm">
-                    <h4 className="font-bold text-lg text-gray-800">{item.nama}</h4>
-                    <p className="text-sm text-gray-600 font-medium mt-1">{item.prodi} - <span className="text-gray-500">{item.kampus}</span></p>
+                    <h4 className="font-bold text-lg text-gray-800 line-clamp-1" title={item.nama}>{item.nama}</h4>
+                    <p className="text-sm text-gray-600 font-medium mt-1 line-clamp-1" title={`${item.prodi} - ${item.kampus}`}>{item.prodi} - <span className="text-gray-500">{item.kampus}</span></p>
                     <div className="mt-4 pt-3 border-t border-green-200/50">
-                      <p className="text-sm text-gray-700"><strong>Pekerjaan:</strong> {item.pekerjaan} di {item.instansi}</p>
+                      <p className="text-xs text-gray-700 line-clamp-2"><strong>Pekerjaan:</strong> {item.pekerjaan} di {item.instansi}</p>
                     </div>
                   </div>
                 ))}
@@ -58,21 +59,23 @@ export default function PencarianView({ alumniDB = [] }) {
             {isSearching ? (
               <div className="text-center py-12 text-gray-400 animate-pulse bg-white rounded-xl border border-gray-100">Melacak PDDIKTI, GitHub, Google, & ORCID...</div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                 {Object.entries(groupedExternal).map(([source, items]) => (
-                  <div key={source} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col h-full max-h-[400px]">
+
+                  <div key={source} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
                     
                     <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3 shrink-0">
-                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-md uppercase tracking-wider border border-blue-100">{source}</span>
-                      <span className="text-xs text-gray-500 font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{items.length} Ditemukan</span>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-blue-100">{source}</span>
+                      <span className="text-[10px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full">{items.length} Ditemukan</span>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                       {items.map((item, idx) => (
                         <a key={idx} href={item.link !== '#' ? item.link : undefined} target="_blank" rel="noopener noreferrer" 
-                           className={`flex gap-3.5 items-start p-3 rounded-xl border border-transparent transition-all ${item.link !== '#' ? 'hover:bg-blue-50 hover:border-blue-100 cursor-pointer' : 'bg-gray-50/50 cursor-default border-gray-100'}`}>
+                           className={`flex gap-3 items-start p-2.5 rounded-xl border border-transparent transition-all ${item.link !== '#' ? 'hover:bg-blue-50 hover:border-blue-100 cursor-pointer' : 'bg-gray-50/50 cursor-default border-gray-100'}`}>
                           
-                          <div className="w-11 h-11 rounded-full shrink-0 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm border border-blue-200/50">
+                          <div className="w-9 h-9 rounded-full shrink-0 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 flex items-center justify-center font-bold text-xs overflow-hidden shadow-sm border border-blue-200/50">
                             {item.image ? (
                               <img src={item.image} alt="Profil" className="w-full h-full object-cover" />
                             ) : (
@@ -80,9 +83,9 @@ export default function PencarianView({ alumniDB = [] }) {
                             )}
                           </div>
                           
-                          <div className="flex-1 min-w-0 pt-0.5">
-                            <h4 className="font-bold text-sm text-gray-800 truncate" title={item.title}>{item.title}</h4>
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed" title={item.desc}>{item.desc}</p>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-xs text-gray-800 truncate" title={item.title}>{item.title}</h4>
+                            <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-relaxed" title={item.desc}>{item.desc}</p>
                           </div>
                         </a>
                       ))}
