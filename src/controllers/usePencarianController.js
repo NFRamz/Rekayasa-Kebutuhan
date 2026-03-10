@@ -6,7 +6,7 @@ const API_GITHUB = import.meta.env.VITE_API_GITHUB;
 const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
 const API_ORCID = import.meta.env.VITE_API_ORCID;
 
-export const usePencarianController = (alumniDB) => {
+const usePencarianController = (alumniDB = []) => {
   const [queryNama, setQueryNama] = useState('');
   const [queryAfiliasi, setQueryAfiliasi] = useState('');
   const [queryKonteks, setQueryKonteks] = useState('');
@@ -39,7 +39,6 @@ export const usePencarianController = (alumniDB) => {
         fetch(`${API_ORCID}?q=${encodeURIComponent(queryNama)}`, { headers: { 'Accept': 'application/json' } }).then(res => res.text())
       ]);
 
-      // Menampilkan SELURUH hasil tanpa dilimit (menghapus .slice)
       if (pddiktiRes.status === 'fulfilled' && Array.isArray(pddiktiRes.value)) {
         pddiktiRes.value.forEach(item => {
           fetchedExternal.push({ source: 'PDDIKTI', title: item.nama, desc: `Kampus: ${item.nama_pt} | Prodi: ${item.nama_prodi} | NIM: ${item.nim}`, link: '#' });
