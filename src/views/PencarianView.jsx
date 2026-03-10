@@ -2,10 +2,9 @@ import React from 'react';
 import { Search, Database, Globe } from 'lucide-react';
 import { usePencarianController } from '../controllers/usePencarianController';
 
-export default function PencarianView({ alumniDB }) {
+export default function PencarianView({ alumniDB = [] }) {
   const { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch } = usePencarianController(alumniDB);
 
-  // Mengelompokkan hasil API eksternal berdasarkan nama "source" nya
   const groupedExternal = externalResults.reduce((acc, item) => {
     if (!acc[item.source]) acc[item.source] = [];
     acc[item.source].push(item);
@@ -36,47 +35,54 @@ export default function PencarianView({ alumniDB }) {
       {(internalResults.length > 0 || externalResults.length > 0 || isSearching) && (
         <div className="flex flex-col gap-6">
           
-          {/* Bagian Database Internal */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2"><Database size={18} className="text-green-600" /> Database Internal</h3>
             {internalResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {internalResults.map(item => (
-                  <div key={item.id} className="p-4 rounded-lg border border-green-100 border-l-4 border-l-green-500 bg-green-50/20">
-                    <h4 className="font-bold text-lg">{item.nama}</h4>
-                    <p className="text-sm text-gray-600">{item.prodi} - {item.kampus}</p>
-                    <p className="mt-3 text-sm"><strong>Pekerjaan:</strong> {item.pekerjaan} di {item.instansi}</p>
+                  <div key={item.id} className="p-5 rounded-xl border border-green-100 border-l-4 border-l-green-500 bg-green-50/30 transition-all hover:shadow-sm">
+                    <h4 className="font-bold text-lg text-gray-800">{item.nama}</h4>
+                    <p className="text-sm text-gray-600 font-medium mt-1">{item.prodi} - <span className="text-gray-500">{item.kampus}</span></p>
+                    <div className="mt-4 pt-3 border-t border-green-200/50">
+                      <p className="text-sm text-gray-700"><strong>Pekerjaan:</strong> {item.pekerjaan} di {item.instansi}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (!isSearching && <div className="bg-yellow-50 p-4 rounded-lg text-yellow-700 text-sm border border-yellow-200">Data tidak ditemukan di database internal. Membaca sumber API publik...</div>)}
           </div>
 
-          {/* Bagian API Publik Eksternal dengan Kotak Persegi per Sumber */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2"><Globe size={18} className="text-blue-600" /> Hasil Rekam Jejak API Publik</h3>
             
             {isSearching ? (
-              <div className="text-center py-10 text-gray-400 animate-pulse bg-white rounded-xl border border-gray-100">Melacak PDDIKTI, GitHub, Google, & ORCID...</div>
+              <div className="text-center py-12 text-gray-400 animate-pulse bg-white rounded-xl border border-gray-100">Melacak PDDIKTI, GitHub, Google, & ORCID...</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
                 {Object.entries(groupedExternal).map(([source, items]) => (
-                  <div key={source} className="bg-white p-5 rounded-xl shadow-sm border border-blue-100 flex flex-col">
+                  <div key={source} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col h-full max-h-[400px]">
                     
-                    {/* Header Kotak Sumber API */}
-                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-3">
-                      <span className="text-[11px] font-bold text-white bg-blue-600 px-2.5 py-1 rounded uppercase tracking-wider">{source}</span>
-                      <span className="text-xs text-gray-400 font-medium">{items.length} hasil ditemukan</span>
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3 shrink-0">
+                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-md uppercase tracking-wider border border-blue-100">{source}</span>
+                      <span className="text-xs text-gray-500 font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{items.length} Ditemukan</span>
                     </div>
                     
-                    {/* List Hasil di Dalam Kotak */}
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                       {items.map((item, idx) => (
-                        <a key={idx} href={item.link !== '#' ? item.link : undefined} target="_blank" rel="noopener noreferrer" className={`flex gap-3 items-start p-2 -mx-2 rounded-lg transition-colors ${item.link !== '#' ? 'hover:bg-blue-50 cursor-pointer' : 'cursor-default'}`}>
-                          {item.image && <div className="w-10 h-10 rounded shrink-0 bg-gray-100 overflow-hidden"><img src={item.image} alt="Profil" className="w-full h-full object-cover" /></div>}
-                          <div>
-                            <h4 className="font-bold text-sm text-gray-800 line-clamp-1">{item.title}</h4>
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.desc}</p>
+                        <a key={idx} href={item.link !== '#' ? item.link : undefined} target="_blank" rel="noopener noreferrer" 
+                           className={`flex gap-3.5 items-start p-3 rounded-xl border border-transparent transition-all ${item.link !== '#' ? 'hover:bg-blue-50 hover:border-blue-100 cursor-pointer' : 'bg-gray-50/50 cursor-default border-gray-100'}`}>
+                          
+                          <div className="w-11 h-11 rounded-full shrink-0 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden shadow-sm border border-blue-200/50">
+                            {item.image ? (
+                              <img src={item.image} alt="Profil" className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{item.title.charAt(0).toUpperCase()}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0 pt-0.5">
+                            <h4 className="font-bold text-sm text-gray-800 truncate" title={item.title}>{item.title}</h4>
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed" title={item.desc}>{item.desc}</p>
                           </div>
                         </a>
                       ))}
