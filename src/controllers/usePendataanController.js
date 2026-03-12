@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.envVITE_SUPABASE_ANON_KEY;
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 const usePendataanController = (alumniDB, setAlumniDB) => {
   const [formData, setFormData] = useState({ 
     nama: '', nim: '', prodi: '', kampus: '', tahun: '', pekerjaan: '', instansi: '', alamat: '', 
-    lat: null, lng: null // Menambahkan lat dan lng ke state form
+    lat: null, lng: null
   });
   
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State khusus untuk pencarian Autocomplete Lokasi
   const [locQuery, setLocQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchingLoc, setIsSearchingLoc] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Efek Debounce: Mencari ke API saat pengguna mengetik dengan jeda
   useEffect(() => {
     if (locQuery.length < 3) {
       setSuggestions([]);
@@ -31,7 +29,6 @@ const usePendataanController = (alumniDB, setAlumniDB) => {
       setIsSearchingLoc(true);
       try {
         const query = encodeURIComponent(locQuery);
-        // Membatasi pencarian hanya di Indonesia (countrycodes=id)
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=id&limit=5`);
         const data = await response.json();
         setSuggestions(data || []);
@@ -41,27 +38,33 @@ const usePendataanController = (alumniDB, setAlumniDB) => {
       } finally {
         setIsSearchingLoc(false);
       }
-    }, 800); // Tunggu 800ms setelah pengguna berhenti mengetik
+    }, 800);
 
     return () => clearTimeout(delayDebounceFn);
   }, [locQuery]);
 
-  // Fungsi saat pengguna mengklik salah satu saran lokasi
   const handleSelectLocation = (loc) => {
+    // FIX: Hanya mengambil bagian pertama dari balasan API (misal: "Tuban")
+    const addressParts = loc.display_name.split(',');
+    let cleanAddress = addressParts[0].trim();
+    
+    // Membersihkan awalan administratif agar yang muncul murni nama daerahnya saja
+    cleanAddress = cleanAddress.replace(/^(Kecamatan|Kec\.|Kabupaten|Kab\.|Kota)\s+/i, '').trim();
+
     setFormData({
       ...formData,
-      alamat: loc.display_name,
+      alamat: cleanAddress, // Menyimpan format nama tunggal (Contoh: "Tuban")
       lat: parseFloat(loc.lat),
       lng: parseFloat(loc.lon)
     });
-    setLocQuery(loc.display_name); // Ubah teks di input menjadi nama lengkap
-    setShowDropdown(false); // Tutup dropdown
+    
+    setLocQuery(cleanAddress); // Menampilkan format bersih di kolom input
+    setShowDropdown(false);
   };
 
   const submitData = async (e) => {
     e.preventDefault();
     
-    // Validasi ketat: Cegah submit jika koordinat belum dikunci
     if (!formData.lat || !formData.lng) {
       alert("Mohon ketik nama kecamatan/kota dan PILIH dari daftar saran yang muncul!");
       return;
@@ -90,7 +93,6 @@ const usePendataanController = (alumniDB, setAlumniDB) => {
     setIsSubmitting(false);
     setSuccess(true);
     
-    // Reset Form
     setFormData({ nama: '', nim: '', prodi: '', kampus: '', tahun: '', pekerjaan: '', instansi: '', alamat: '', lat: null, lng: null });
     setLocQuery('');
     setTimeout(() => setSuccess(false), 3000);
