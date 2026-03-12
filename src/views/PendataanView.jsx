@@ -58,13 +58,21 @@ const usePendataanController = (alumniDB, setAlumniDB) => {
   }, [locQuery]);
 
   const handleSelectLocation = (loc) => {
+    // FIX: Hanya mengambil bagian pertama dari balasan API (misal: "Tuban")
+    const addressParts = loc.display_name.split(',');
+    let cleanAddress = addressParts[0].trim();
+    
+    // Membersihkan awalan administratif agar yang muncul murni nama daerahnya saja
+    cleanAddress = cleanAddress.replace(/^(Kecamatan|Kec\.|Kabupaten|Kab\.|Kota)\s+/i, '').trim();
+
     setFormData({
       ...formData,
-      alamat: loc.display_name,
+      alamat: cleanAddress, // Menyimpan format nama tunggal (Contoh: "Tuban")
       lat: parseFloat(loc.lat),
       lng: parseFloat(loc.lon)
     });
-    setLocQuery(loc.display_name);
+    
+    setLocQuery(cleanAddress); // Menampilkan format bersih di kolom input
     setShowDropdown(false);
   };
 
@@ -174,16 +182,20 @@ export default function PendataanView({ alumniDB, setAlumniDB }) {
             {/* Area Dropdown Rekomendasi */}
             {showDropdown && suggestions.length > 0 && (
               <ul className="absolute z-50 w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-100">
-                {suggestions.map((loc, idx) => (
-                  <li 
-                    key={idx} 
-                    className="p-3 hover:bg-blue-50 cursor-pointer transition-colors flex flex-col"
-                    onClick={() => handleSelectLocation(loc)}
-                  >
-                    <span className="text-sm font-bold text-gray-800 line-clamp-1">{loc.display_name.split(',')[0]}</span>
-                    <span className="text-xs text-gray-500 line-clamp-1 mt-0.5">{loc.display_name}</span>
-                  </li>
-                ))}
+                {suggestions.map((loc, idx) => {
+                  // Memotong tampilan saran utama di dropdown agar seragam
+                  const shortName = loc.display_name.split(',')[0].replace(/^(Kecamatan|Kec\.|Kabupaten|Kab\.|Kota)\s+/i, '').trim();
+                  return (
+                    <li 
+                      key={idx} 
+                      className="p-3 hover:bg-blue-50 cursor-pointer transition-colors flex flex-col"
+                      onClick={() => handleSelectLocation(loc)}
+                    >
+                      <span className="text-sm font-bold text-gray-800 line-clamp-1">{shortName}</span>
+                      <span className="text-xs text-gray-500 line-clamp-1 mt-0.5">{loc.display_name}</span>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
