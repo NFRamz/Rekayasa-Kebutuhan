@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FileText, CheckCircle, Loader, MapPin, Search } from 'lucide-react';
 import { usePendataanController } from '../controllers/usePendataanController';
 // --- VIEW COMPONENT ---
