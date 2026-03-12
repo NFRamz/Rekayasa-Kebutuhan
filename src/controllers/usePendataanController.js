@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.envVITE_SUPABASE_ANON_KEY;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
-const usePendataanController = (alumniDB, setAlumniDB) => {
+export const usePendataanController = (alumniDB, setAlumniDB) => {
   const [formData, setFormData] = useState({ 
     nama: '', nim: '', prodi: '', kampus: '', tahun: '', pekerjaan: '', instansi: '', alamat: '', 
     lat: null, lng: null
