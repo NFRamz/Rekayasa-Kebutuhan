@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, CheckCircle, Loader, MapPin, Search } from 'lucide-react';
-
+import { usePendataanController } from '../controllers/usePendataanController';
 // --- VIEW COMPONENT ---
 export default function PendataanView({ alumniDB, setAlumniDB }) {
   const { 
