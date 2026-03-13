@@ -17,7 +17,7 @@ export const usePetaController = (alumniDB = []) => {
   useEffect(() => {
     const isFilterAll = filterKampus.trim() === '' || filterKampus.toLowerCase() === 'semua';
 
-    // 1. Filter alumni yang terverifikasi dan memiliki koordinat
+    
     const filteredAlumni = alumniDB.filter(a => {
       const isVerified = a.status === 'Terverifikasi';
       const hasCoords = a.lat !== undefined && a.lng !== undefined && a.lat !== null;
@@ -25,17 +25,12 @@ export const usePetaController = (alumniDB = []) => {
       return isVerified && hasCoords && matchesKampus;
     });
 
-    // 2. Agregasi data berdasarkan lokasi (Kota)
-    // Kita gunakan kombinasi Lat & Lng sebagai kunci agar pin bertumpuk di titik yang sama jika koordinatnya identik
     const locationGroups = {};
 
     filteredAlumni.forEach(alumni => {
-      // Ekstrak nama kota untuk tampilan label
-      const parts = alumni.alamat.split(',');
+      const parts  = alumni.alamat.split(',');
       let cityName = parts[parts.length - 1].trim();
-      cityName = cityName.replace(/(kota|kabupaten|kab\.)/g, '').trim();
-      
-      // Gunakan string koordinat sebagai ID unik grup agar akurasi 100% sesuai DB
+      cityName     = cityName.replace(/(kota|kabupaten|kab\.)/g, '').trim();
       const geoKey = `${alumni.lat},${alumni.lng}`;
 
       if (!locationGroups[geoKey]) {
@@ -44,7 +39,7 @@ export const usePetaController = (alumniDB = []) => {
           jumlah: 0,
           lat: alumni.lat,
           lng: alumni.lng,
-          alumniList: [] // Opsional: untuk detail saat diklik
+          alumniList: [] 
         };
       }
       locationGroups[geoKey].jumlah += 1;
