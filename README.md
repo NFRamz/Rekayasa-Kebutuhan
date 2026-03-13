@@ -1,3 +1,7 @@
+## Nama : Naufal Ramzi
+## NIM  : 202310370311026
+## Kelas: Rekayasa Kebutuhan D
+
 # Sistem Pelacakan dan Pemetaan Alumni
 
 Aplikasi web interaktif untuk melakukan pendataan mandiri, pelacakan jejak digital dari berbagai sumber (Internal DB, PDDIKTI, GitHub, Google, ORCID), serta visualisasi pemetaan sebaran domisili alumni.
