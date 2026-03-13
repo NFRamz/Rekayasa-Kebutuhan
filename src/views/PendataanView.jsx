@@ -11,7 +11,6 @@ export default function PendataanView({ alumniDB, setAlumniDB }) {
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2"><FileText className="text-blue-600" /> Form Pendataan Alumni</h2>
-      <p className="text-sm text-gray-500 mb-6">Fase A: Sistem dilengkapi validasi lokasi untuk akurasi peta sebaran.</p>
       
       {success && <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 flex items-center gap-2"><CheckCircle size={20} /> Data dan Koordinat berhasil disimpan ke antrean verifikasi!</div>}
       
