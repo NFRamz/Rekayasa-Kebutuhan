@@ -1,17 +1,15 @@
 import React from 'react';
-// Import ikon tambahan untuk masing-masing sumber
 import { Search, Database, Globe, BookOpen, Github, User } from 'lucide-react';
 import { usePencarianController } from '../controllers/usePencarianController';
 
 export default function PencarianView({ alumniDB = [] }) {
   const { queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, isSearching, internalResults, externalResults, executeSearch } = usePencarianController(alumniDB);
 
-  // Memaksa 4 kategori API eksternal agar selalu muncul kotaknya meskipun kosong (0 Ditemukan)
   const groupedExternal = {
-    'PDDIKTI': [],
-    'GitHub': [],
+    'PDDIKTI'   : [],
+    'GitHub'    : [],
     'Google Web': [],
-    'ORCID': []
+    'ORCID'     : []
   };
 
   externalResults.forEach(item => {
@@ -21,7 +19,6 @@ export default function PencarianView({ alumniDB = [] }) {
   });
 
   return (
-    // Max-w dibuat sangat lebar agar 5 kolom muat berdampingan dengan lega
     <div className="max-w-[1500px] w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 px-2">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Search className="text-blue-600" /> Pencarian Jejak Alumni Terpadu</h2>
       
@@ -50,7 +47,6 @@ export default function PencarianView({ alumniDB = [] }) {
                Mencari data secara real-time di 5 platform sekaligus...
              </div>
           ) : (
-            // Mengatur layout 5 kolom berdampingan secara spesifik
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
               
               {/* KOLOM 1: DATABASE INTERNAL */}
@@ -62,7 +58,6 @@ export default function PencarianView({ alumniDB = [] }) {
                   <span className="text-[10px] bg-green-800 px-2 py-0.5 rounded-full">{internalResults.length}</span>
                 </div>
                 
-                {/* Scroll mandiri pada setiap kolom */}
                 <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar bg-gray-50/50">
                   {internalResults.length > 0 ? internalResults.map(item => (
                     <div key={item.id} className="p-3 rounded-lg border border-green-200 bg-white hover:shadow-md transition-shadow">
