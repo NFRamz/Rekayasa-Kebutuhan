@@ -8,7 +8,6 @@ export const usePetaController = (alumniDB = []) => {
   const [filterKampus, setFilterKampus] = useState('');
   const [aggregatedMapData, setAggregatedMapData] = useState([]);
 
-  // Ambil daftar unik kampus untuk dropdown filter
   const availableCampuses = [...new Set(alumniDB
     .filter(a => a.status === 'Terverifikasi' && a.kampus)
     .map(a => a.kampus)
