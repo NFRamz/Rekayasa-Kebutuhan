@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, CheckCircle, Loader, MapPin, Search } from 'lucide-react';
 import { usePendataanController } from '../controllers/usePendataanController';
-// --- VIEW COMPONENT ---
+
 export default function PendataanView({ alumniDB, setAlumniDB }) {
   const { 
     formData, setFormData, submitData, success, isSubmitting,
@@ -66,7 +66,7 @@ export default function PendataanView({ alumniDB, setAlumniDB }) {
             {showDropdown && suggestions.length > 0 && (
               <ul className="absolute z-50 w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-60 overflow-y-auto divide-y divide-gray-100">
                 {suggestions.map((loc, idx) => {
-                  // Memotong tampilan saran utama di dropdown agar seragam
+
                   const shortName = loc.display_name.split(',')[0].replace(/^(Kecamatan|Kec\.|Kabupaten|Kab\.|Kota)\s+/i, '').trim();
                   return (
                     <li 
@@ -83,7 +83,6 @@ export default function PendataanView({ alumniDB, setAlumniDB }) {
             )}
           </div>
           
-          {/* Indikator Status Geocoding */}
           <div className="mt-2">
             {formData.lat ? (
               <span className="text-xs font-medium text-green-600 flex items-center gap-1">
@@ -97,7 +96,6 @@ export default function PendataanView({ alumniDB, setAlumniDB }) {
           </div>
         </div>
         
-        {/* Tombol Submit Terkunci jika Lat/Lng Kosong */}
         <button 
           type="submit" 
           disabled={isSubmitting || !formData.lat} 
