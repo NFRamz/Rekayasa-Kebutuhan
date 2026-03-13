@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-// Konfigurasi API
-const API_PDDIKTI = import.meta.env.VITE_API_PDDIKTI;
-const API_GITHUB = import.meta.env.VITE_API_GITHUB;
-const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
-const API_ORCID = import.meta.env.VITE_API_ORCID;
 
-// PASTIKAN ADA KATA "export" DI SINI AGAR TIDAK ERROR DI VERCEL
+const API_PDDIKTI    = import.meta.env.VITE_API_PDDIKTI;
+const API_GITHUB     = import.meta.env.VITE_API_GITHUB;
+const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
+const API_ORCID      = import.meta.env.VITE_API_ORCID;
+
+
 export const usePencarianController = (alumniDB = []) => {
   const [queryNama, setQueryNama] = useState('');
   const [queryAfiliasi, setQueryAfiliasi] = useState('');
