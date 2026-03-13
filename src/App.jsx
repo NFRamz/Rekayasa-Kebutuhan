@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { Search, MapPin, FileText, ShieldCheck } from 'lucide-react';
-
-// Import Model
 import { useAppModel } from './models/useAppModel';
-
-// Import Views
 import PencarianView from './views/PencarianView';
 import PetaView from './views/PetaView';
 import PendataanView from './views/PendataanView';
@@ -12,8 +8,6 @@ import AdminView from './views/AdminView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('pencarian');
-  
-  // Inisialisasi Model Data (Mengeksekusi Data Dummy / Fetch Supabase)
   const { alumniDB, setAlumniDB } = useAppModel();
 
   return (
