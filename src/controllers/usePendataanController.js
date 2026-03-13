@@ -44,7 +44,6 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
   }, [locQuery]);
 
   const handleSelectLocation = (loc) => {
-    // FIX: Hanya mengambil bagian pertama dari balasan API (misal: "Tuban")
     const addressParts = loc.display_name.split(',');
     let cleanAddress = addressParts[0].trim();
     
@@ -53,12 +52,12 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
 
     setFormData({
       ...formData,
-      alamat: cleanAddress, // Menyimpan format nama tunggal (Contoh: "Tuban")
+      alamat: cleanAddress, 
       lat: parseFloat(loc.lat),
       lng: parseFloat(loc.lon)
     });
     
-    setLocQuery(cleanAddress); // Menampilkan format bersih di kolom input
+    setLocQuery(cleanAddress); 
     setShowDropdown(false);
   };
 
