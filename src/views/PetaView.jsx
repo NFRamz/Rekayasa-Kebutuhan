@@ -5,7 +5,6 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fungsi untuk membuat Custom HTML Marker (Desain Pin + Angka)
 const createCustomIcon = (city) => {
   return L.divIcon({
     className: 'custom-pin-container',
@@ -61,7 +60,7 @@ export default function PetaView({ alumniDB = [] }) {
           `}</style>
 
           <MapContainer 
-            center={[-2.5, 118.0]} // Titik tengah Indonesia agar mencakup seluruh wilayah
+            center={[-2.5, 118.0]} 
             zoom={5} 
             scrollWheelZoom={true} 
             style={{ height: '100%', width: '100%' }}
