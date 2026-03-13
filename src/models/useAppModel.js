@@ -4,6 +4,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
+//datatest saat  belum pakai DB
 export const useAppModel = () => {
   const [alumniDB, setAlumniDB] = useState([
     { id: 1, nama: 'Naufal Ramzi', nim: '202310370311026', prodi: 'Informatika', kampus: 'Universitas Muhammadiyah Malang', tahun: '2024', pekerjaan: 'UI/UX Designer', instansi: 'Ruangguru', alamat: 'Kec. Blimbing, Kota Malang', status: 'Terverifikasi' },
