@@ -18,8 +18,8 @@ function LoginScreen({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Kredensial untuk Dosen
-    if (username === 'admin' && password === 'admin123') {
+    // Kredensial untuk Dosenaa
+    if (username === 'naufal2023026' && password === 'admin123') {
       onLogin(true);
     } else {
       setError('Username atau password salah!');
