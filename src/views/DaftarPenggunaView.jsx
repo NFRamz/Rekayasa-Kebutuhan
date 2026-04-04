@@ -147,10 +147,10 @@ export default function DaftarPenggunaView() {
       // ===============================================================
       // 4. GABUNGKAN KEDUANYA DAN HAPUS DUPLIKASI (Prioritas Supabase)
       // ===============================================================
-      const allSupaData = [...(supaData1 || []), ...supaData2];
+    const allSupaData = [...(supaData1 || []), ...supaData2];
       const supaMap = {};
       
-      // Normalisasi kolom Supabase
+      // Normalisasi kolom Supabase agar bisa menimpa/melengkapi data Excel
       allSupaData.forEach(item => {
         supaMap[item.nim] = {
           ...item,
@@ -162,14 +162,28 @@ export default function DaftarPenggunaView() {
           jenisPekerjaan: item.jenispekerjaan || item.jenisPekerjaan,
           sosmedBekerja: item.sosmedbekerja || item.sosmedBekerja,
           posisi: item.posisi || item.pekerjaan || item.posisi,
-          isUpdated: true // Menandakan bahwa data ini bersumber/telah diperbarui di Supabase
+          isUpdated: true 
         };
       });
 
       const combinedList = [];
       const seenNims = new Set();
 
-      // A. Masukkan hasil Supabase yang mandiri terlebih dahulu (Agar data baru muncul paling atas)
+// PRIORITAS 1: MASUKKAN SEMUA DATA DARI EXCEL TERLEBIH DAHULU
+      parsedData.forEach(item => {
+        if (!seenNims.has(item.nim)) {
+          // Jika ada NIM ini di Supabase, timpa data Excelnya dengan data Supabase yang lebih lengkap
+          if (supaMap[item.nim]) {
+            combinedList.push(supaMap[item.nim]);
+          } else {
+            // Jika belum ada di Supabase, masukkan data asli dari Excel
+            combinedList.push({ ...item, isUpdated: false });
+          }
+          seenNims.add(item.nim);
+        }
+      });
+
+      // PRIORITAS 2: MASUKKAN DATA BARU SUPABASE YANG TIDAK ADA DI EXCEL (Di bagian bawah)
       if (supaData1) {
         supaData1.forEach(item => {
           if (!seenNims.has(item.nim)) {
@@ -178,18 +192,6 @@ export default function DaftarPenggunaView() {
           }
         });
       }
-
-      // B. Masukkan hasil Google Sheets (Jika sudah ada di Supabase, pakai versi Supabase-nya)
-      parsedData.forEach(item => {
-        if (!seenNims.has(item.nim)) {
-          if (supaMap[item.nim]) {
-            combinedList.push(supaMap[item.nim]);
-          } else {
-            combinedList.push({ ...item, isUpdated: false });
-          }
-          seenNims.add(item.nim);
-        }
-      });
 
       setAlumniList(combinedList);
 
