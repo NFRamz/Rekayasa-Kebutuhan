@@ -2,6 +2,13 @@
 ## NIM  : 202310370311026
 ## Kelas: Rekayasa Kebutuhan D
 
+## 🔗 Tautan Website
+
+Live Website :  
+https://dailyproject4-chi.vercel.app/
+
+---
+
 # Sistem Pelacakan dan Pemetaan Alumni
 
 Aplikasi web interaktif untuk melakukan pendataan mandiri, pelacakan jejak digital dari berbagai sumber (Internal DB, PDDIKTI, GitHub, Google, ORCID), serta visualisasi pemetaan sebaran domisili alumni.
@@ -14,12 +21,7 @@ Proyek ini dibangun menggunakan:
 
 ---
 
-## 🔗 Tautan Website
 
-Live Website :  
-https://dailyproject4-chi.vercel.app/
-
----
 
 # 1. Penjelasan Modul Utama (Fase Sistem)
 
