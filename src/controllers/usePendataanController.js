@@ -5,9 +5,15 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const usePendataanController = (alumniDB, setAlumniDB) => {
+  // Ditambahkan 8 field sesuai instruksi tugas dosen
   const [formData, setFormData] = useState({ 
-    nama: '', nim: '', prodi: '', kampus: '', tahun: '', pekerjaan: '', instansi: '', alamat: '', 
-    lat: null, lng: null
+    nama: '', nim: '', prodi: '', kampus: '', tahun: '', 
+    // Field Tambahan Baru
+    email: '', noHp: '',
+    linkedin: '', ig: '', fb: '', tiktok: '',
+    jenisPekerjaan: '', tempatBekerja: '', alamatBekerja: '', posisi: '', sosmedBekerja: '',
+    // Kebutuhan Peta
+    alamat: '', lat: null, lng: null
   });
   
   const [success, setSuccess] = useState(false);
@@ -47,7 +53,6 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
     const addressParts = loc.display_name.split(',');
     let cleanAddress = addressParts[0].trim();
     
-    // Membersihkan awalan administratif agar yang muncul murni nama daerahnya saja
     cleanAddress = cleanAddress.replace(/^(Kecamatan|Kec\.|Kabupaten|Kab\.|Kota)\s+/i, '').trim();
 
     setFormData({
@@ -65,14 +70,20 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
     e.preventDefault();
     
     if (!formData.lat || !formData.lng) {
-      alert("Mohon ketik nama kecamatan/kota dan PILIH dari daftar saran yang muncul!");
+      alert("Mohon ketik nama kecamatan/kota domisili dan PILIH dari daftar saran yang muncul!");
       return;
     }
 
     setIsSubmitting(true);
 
+    // Salin pekerjaan untuk kompatibilitas peta jika admin belum review
+    const instansiMap = formData.tempatBekerja; 
+    const pekerjaanMap = formData.posisi;
+
     const newAlumni = { 
       ...formData, 
+      instansi: instansiMap,
+      pekerjaan: pekerjaanMap,
       id: Date.now(), 
       status: 'Menunggu Verifikasi'
     };
@@ -92,7 +103,13 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
     setIsSubmitting(false);
     setSuccess(true);
     
-    setFormData({ nama: '', nim: '', prodi: '', kampus: '', tahun: '', pekerjaan: '', instansi: '', alamat: '', lat: null, lng: null });
+    // Reset Form
+    setFormData({ 
+      nama: '', nim: '', prodi: '', kampus: '', tahun: '', 
+      email: '', noHp: '', linkedin: '', ig: '', fb: '', tiktok: '',
+      jenisPekerjaan: '', tempatBekerja: '', alamatBekerja: '', posisi: '', sosmedBekerja: '',
+      alamat: '', lat: null, lng: null 
+    });
     setLocQuery('');
     setTimeout(() => setSuccess(false), 3000);
   };
