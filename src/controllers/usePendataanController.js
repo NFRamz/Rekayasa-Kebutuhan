@@ -5,14 +5,11 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
 export const usePendataanController = (alumniDB, setAlumniDB) => {
-  // Ditambahkan 8 field sesuai instruksi tugas dosen
   const [formData, setFormData] = useState({ 
     nama: '', nim: '', prodi: '', kampus: '', tahun: '', 
-    // Field Tambahan Baru
     email: '', noHp: '',
     linkedin: '', ig: '', fb: '', tiktok: '',
-    jenisPekerjaan: '', tempatBekerja: '', alamatBekerja: '', posisi: '', sosmedBekerja: '',
-    // Kebutuhan Peta
+    jenispekerjaan: '', tempatbekerja: '', alamatbekerja: '', posisi: '', sosmedbekerja: '',
     alamat: '', lat: null, lng: null
   });
   
@@ -76,38 +73,72 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
 
     setIsSubmitting(true);
 
-    // Salin pekerjaan untuk kompatibilitas peta jika admin belum review
-    const instansiMap = formData.tempatBekerja; 
-    const pekerjaanMap = formData.posisi;
-
-    const newAlumni = { 
-      ...formData, 
-      instansi: instansiMap,
-      pekerjaan: pekerjaanMap,
-      id: Date.now(), 
+    // 1. TERJEMAHKAN DATA AGAR 100% COCOK DENGAN SCHEMA SUPABASE
+    const payloadSupabase = {
+      nim: formData.nim,
+      nama: formData.nama,
+      prodi: formData.prodi,
+      kampus: formData.kampus,
+      tahun: parseInt(formData.tahun) || null, // Ubah string ke integer
+      email: formData.email,
+      nohp: formData.noHp, // Perbaikan: Sesuaikan huruf kecil
+      linkedin: formData.linkedin,
+      ig: formData.ig,
+      fb: formData.fb,
+      tiktok: formData.tiktok,
+      jenispekerjaan: formData.jenispekerjaan,
+      tempatbekerja: formData.tempatbekerja,
+      alamatbekerja: formData.alamatbekerja,
+      posisi: formData.posisi,
+      sosmedbekerja: formData.sosmedbekerja,
+      alamat: formData.alamat,
+      lat: formData.lat,
+      lng: formData.lng,
+      instansi: formData.tempatbekerja, // Salinan untuk kompatibilitas peta
+      pekerjaan: formData.posisi,       // Salinan untuk kompatibilitas peta
       status: 'Menunggu Verifikasi'
+      // HAPUS id: Date.now() karena schema tidak punya kolom 'id'
     };
     
-    if (setAlumniDB) setAlumniDB([...(alumniDB || []), newAlumni]);
+    // Update local state (UI)
+    if (setAlumniDB) setAlumniDB([...(alumniDB || []), payloadSupabase]);
 
+    // Kirim ke API Supabase
     if (USE_SUPABASE) {
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/alumni`, {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/alumni`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
-          body: JSON.stringify(newAlumni)
+          headers: { 
+            'Content-Type': 'application/json', 
+            apikey: SUPABASE_KEY, 
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify(payloadSupabase) // Kirim payload yang sudah bersih
         });
-      } catch (err) { console.error("Gagal simpan ke DB", err); }
+
+        // Tangkap error detail jika masih gagal
+        if (!response.ok) {
+           const errData = await response.json();
+           console.error("Detail Error Supabase:", errData);
+           throw new Error(errData.message || "Gagal menyimpan ke database");
+        }
+      } catch (err) { 
+        console.error("Gagal simpan ke DB", err); 
+        alert("Gagal mendaftar: " + err.message);
+        setIsSubmitting(false);
+        return; // Hentikan eksekusi jika error
+      }
     }
     
     setIsSubmitting(false);
     setSuccess(true);
     
-    // Reset Form
+    // Reset Form (Gunakan nama properti lowercase agar sinkron saat diketik ulang)
     setFormData({ 
       nama: '', nim: '', prodi: '', kampus: '', tahun: '', 
       email: '', noHp: '', linkedin: '', ig: '', fb: '', tiktok: '',
-      jenisPekerjaan: '', tempatBekerja: '', alamatBekerja: '', posisi: '', sosmedBekerja: '',
+      jenispekerjaan: '', tempatbekerja: '', alamatbekerja: '', posisi: '', sosmedbekerja: '',
       alamat: '', lat: null, lng: null 
     });
     setLocQuery('');
