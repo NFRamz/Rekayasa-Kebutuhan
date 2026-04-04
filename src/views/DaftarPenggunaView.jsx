@@ -12,11 +12,12 @@ import {
   FileSpreadsheet,
   ChevronLeft,
   ChevronRight,
-  Edit
+  Edit,
+  Briefcase,
+  GraduationCap
 } from 'lucide-react';
 
 import { createClient } from '@supabase/supabase-js';
-
 
 // ==========================================
 // KONFIGURASI SUPABASE & GOOGLE SHEETS
@@ -92,6 +93,7 @@ export default function DaftarPenggunaView() {
   const ITEMS_PER_PAGE = 50;
 
   const [editingAlumni, setEditingAlumni] = useState(null);
+  const [osintTarget, setOsintTarget] = useState(null); // State baru untuk Modal OSINT
 
   // FUNGSI FETCH YANG SUDAH DIPERBARUI (MENGGABUNGKAN KEDUA DATABASE)
   const fetchPageData = useCallback(async (page, search = '') => {
@@ -147,7 +149,7 @@ export default function DaftarPenggunaView() {
       // ===============================================================
       // 4. GABUNGKAN KEDUANYA DAN HAPUS DUPLIKASI (Prioritas Supabase)
       // ===============================================================
-    const allSupaData = [...(supaData1 || []), ...supaData2];
+      const allSupaData = [...(supaData1 || []), ...supaData2];
       const supaMap = {};
       
       // Normalisasi kolom Supabase agar bisa menimpa/melengkapi data Excel
@@ -169,7 +171,7 @@ export default function DaftarPenggunaView() {
       const combinedList = [];
       const seenNims = new Set();
 
-// PRIORITAS 1: MASUKKAN SEMUA DATA DARI EXCEL TERLEBIH DAHULU
+      // PRIORITAS 1: MASUKKAN SEMUA DATA DARI EXCEL TERLEBIH DAHULU
       parsedData.forEach(item => {
         if (!seenNims.has(item.nim)) {
           // Jika ada NIM ini di Supabase, timpa data Excelnya dengan data Supabase yang lebih lengkap
@@ -271,32 +273,39 @@ export default function DaftarPenggunaView() {
             <table className="w-full text-left border-collapse min-w-[1400px]">
               <thead className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                 <tr className="text-gray-600 text-xs uppercase tracking-wider">
-                  <th className="p-3 font-semibold border-b border-gray-200 sticky left-0 bg-gray-100 z-30 shadow-[1px_0_0_#e5e7eb]">Aksi</th>
+                  <th className="p-3 font-semibold border-b border-gray-200 sticky left-0 bg-gray-100 z-30 shadow-[1px_0_0_#e5e7eb] w-36">Aksi</th>
                   <th className="p-3 font-semibold border-b border-gray-200">Identitas Diri</th>
                   <th className="p-3 font-semibold border-b border-gray-200">Data Akademik</th>
                   <th className="p-3 font-semibold border-b border-gray-200">Kontak (Email/HP)</th>
                   <th className="p-3 font-semibold border-b border-gray-200">Sosial Media</th>
                   <th className="p-3 font-semibold border-b border-gray-200">Karir & Pekerjaan</th>
-                
-                  {/*<th className="p-3 font-semibold border-b border-gray-200">Status Data</th>*/}
-
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
                 {isLoadingData && alumniList.length === 0 ? (
-                  <tr><td colSpan="7" className="p-16 text-center text-gray-500"><RefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" /> Memuat data alumni...</td></tr>
+                  <tr><td colSpan="6" className="p-16 text-center text-gray-500"><RefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" /> Memuat data alumni...</td></tr>
                 ) : alumniList.length > 0 ? (
                   alumniList.map((alumnus, index) => {
                     const isLengkap = alumnus.isUpdated;
                     return (
                       <tr key={`${alumnus.nim}-${index}`} className="hover:bg-blue-50/40 transition-colors group">
                         
-                        {/* KOLOM 1: AKSI (STICKY KIRI) */}
-                        <td className="p-3 align-top sticky left-0 bg-white group-hover:bg-blue-50/40 transition-colors shadow-[1px_0_0_#f3f4f6] z-10 w-32">
-                          <button onClick={() => setEditingAlumni(alumnus)} className={`w-full flex justify-center items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[11px] font-bold transition-all shadow-sm ${isLengkap ? 'bg-white border-green-300 text-green-700 hover:bg-green-50' : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'}`}>
-                            <Edit className="w-3.5 h-3.5" />
-                            {isLengkap ? 'Edit Data' : 'Lengkapi'}
-                          </button>
+                        {/* KOLOM 1: AKSI DENGAN TOMBOL OSINT */}
+                        <td className="p-3 align-top sticky left-0 bg-white group-hover:bg-blue-50/40 transition-colors shadow-[1px_0_0_#f3f4f6] z-10 w-36">
+                          <div className="flex flex-col gap-2">
+                            <button 
+                              onClick={() => setOsintTarget(alumnus)} 
+                              className="w-full flex justify-center items-center gap-1.5 px-2 py-1.5 border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-[10px] font-bold transition-all shadow-sm"
+                            >
+                              <Search className="w-3.5 h-3.5" /> OSINT Track
+                            </button>
+                            <button 
+                              onClick={() => setEditingAlumni(alumnus)} 
+                              className={`w-full flex justify-center items-center gap-1.5 px-2 py-1.5 border rounded-lg text-[10px] font-bold transition-all shadow-sm ${isLengkap ? 'bg-white border-green-300 text-green-700 hover:bg-green-50' : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'}`}
+                            >
+                              <Edit className="w-3.5 h-3.5" /> {isLengkap ? 'Edit Data' : 'Lengkapi'}
+                            </button>
+                          </div>
                         </td>
 
                         {/* KOLOM 2: IDENTITAS */}
@@ -357,25 +366,11 @@ export default function DaftarPenggunaView() {
                           )}
                         </td>
 
-                        {/* KOLOM 7: STATUS DATA 
-                        <td className="p-3 align-top min-w-[140px]">
-                          {isLengkap ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold shadow-sm">
-                              <Database className="w-3 h-3" /> Supabase
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-gray-50 border border-gray-200 text-gray-500 text-[10px] font-bold">
-                              <FileSpreadsheet className="w-3 h-3" /> Excel Master
-                            </span>
-                          )}
-                        </td>
-                        */}
-
                       </tr>
                     );
                   })
                 ) : (
-                  <tr><td colSpan="7" className="p-16 text-center text-gray-500">
+                  <tr><td colSpan="6" className="p-16 text-center text-gray-500">
                     <div className="text-lg font-medium text-gray-800 mb-1">Data tidak ditemukan</div>
                     <p>Pencarian "{searchTerm}" tidak memberikan hasil pada halaman ini.</p>
                   </td></tr>
@@ -400,9 +395,121 @@ export default function DaftarPenggunaView() {
         </div>
       </div>
 
+      {/* Render Modal Edit Data */}
       {editingAlumni && (
         <DataFormModal alumnus={editingAlumni} onClose={() => setEditingAlumni(null)} onSaveSuccess={handleUpdateLokal} supabase={supabase} />
       )}
+
+      {/* Render Modal OSINT */}
+      {osintTarget && (
+        <OsintModal 
+          alumnus={osintTarget} 
+          onClose={() => setOsintTarget(null)} 
+          onProceed={() => {
+            setEditingAlumni(osintTarget);
+            setOsintTarget(null);
+          }} 
+        />
+      )}
+    </div>
+  );
+}
+
+// --- KOMPONEN MODAL OSINT (BARU) ---
+function OsintModal({ alumnus, onClose, onProceed }) {
+  const qLinked = `site:id.linkedin.com/in OR site:linkedin.com/in "${alumnus.nama}" "${alumnus.prodi}"`;
+  const qScholar = `"${alumnus.nama}" "${alumnus.prodi}"`;
+  const qWeb = `"${alumnus.nama}" "${alumnus.prodi}" (site:instagram.com OR site:facebook.com OR site:tiktok.com)`;
+
+  return (
+    <div className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Header Modal OSINT */}
+        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-start bg-indigo-900 text-white shrink-0 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500 blur-[60px] rounded-full opacity-30 -translate-y-1/2 translate-x-1/2"></div>
+          <div className="relative z-10">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Globe className="w-5 h-5" /> OSINT Tracker Assistant
+            </h3>
+            <p className="text-sm text-indigo-200 mt-1">Pencarian jejak digital pintar untuk: <strong className="text-white">{alumnus.nama}</strong></p>
+          </div>
+          <button onClick={onClose} className="p-2 text-indigo-200 hover:text-white hover:bg-indigo-800 rounded-full transition-colors relative z-10">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Konten OSINT */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-50 custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+            
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300 transition-colors flex flex-col">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-800">LinkedIn & Karir</h4>
+              </div>
+              <p className="text-xs text-gray-500 mb-4 flex-1">Telusuri riwayat pekerjaan dan profil profesional kandidat.</p>
+              <a 
+                href={`https://www.google.com/search?q=${encodeURIComponent(qLinked)}`} 
+                target="_blank" rel="noopener noreferrer"
+                className="w-full text-center py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Cari di LinkedIn
+              </a>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-300 transition-colors flex flex-col">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-800">Akademik & Jurnal</h4>
+              </div>
+              <p className="text-xs text-gray-500 mb-4 flex-1">Temukan publikasi ilmiah atau status studi lanjutan.</p>
+              <a 
+                href={`https://scholar.google.com/scholar?q=${encodeURIComponent(qScholar)}`} 
+                target="_blank" rel="noopener noreferrer"
+                className="w-full text-center py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Cari di Scholar
+              </a>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-pink-300 transition-colors flex flex-col md:col-span-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-800">Sosial Media Publik (IG, FB, TikTok)</h4>
+              </div>
+              <p className="text-xs text-gray-500 mb-4 flex-1">Pindai presensi digital kandidat di platform sosial media populer.</p>
+              <a 
+                href={`https://www.google.com/search?q=${encodeURIComponent(qWeb)}`} 
+                target="_blank" rel="noopener noreferrer"
+                className="w-full text-center py-2.5 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Pindai Sosial Media
+              </a>
+            </div>
+
+          </div>
+
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-left">
+              <h5 className="font-bold text-indigo-900 text-sm">Sudah menemukan informasinya?</h5>
+              <p className="text-xs text-indigo-700 mt-1">Lanjutkan untuk menyalin data yang ditemukan ke dalam sistem database.</p>
+            </div>
+            <button 
+              onClick={onProceed}
+              className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2"
+            >
+              Lanjutkan Isi Form <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -564,7 +671,7 @@ function DataFormModal({ alumnus, onClose, onSaveSuccess, supabase }) {
           <button type="button" onClick={onClose} disabled={isSaving} className="px-6 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors shadow-sm">Batal</button>
           <button type="submit" form="alumni-form" disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md disabled:bg-blue-400 transition-colors">
             {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isSaving ? 'Menyimpan...' : 'Simpan ke Supabase DB'}
+            {isSaving ? 'Menyimpan...' : 'Simpan'}
           </button>
         </div>
       </div>
