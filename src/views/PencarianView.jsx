@@ -13,7 +13,7 @@ export default function PencarianView({ setActiveTab }) {
     isSearching, internalResults, externalResults, alumniDB, executeSearch, simpanJejak, updateInformasiAlumni,
     currentPage, setCurrentPage, totalData, searchHistory, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
-    isImporting, importProgress, importStatus, handleImportExcel,
+    isImporting, importProgress, importStatus, handleImportExcel,exportProgressCount,
     isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,
     globalStats 
   } = usePencarianController();
@@ -122,12 +122,30 @@ export default function PencarianView({ setActiveTab }) {
             </label>
 
             <button onClick={() => exportToSpreadsheet(true)} disabled={isSearching || isImporting || isExporting || isAutoTracking} className="flex items-center gap-2 bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white border border-amber-200 px-3 py-2 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm transition-all active:scale-95 disabled:opacity-50">
-                <CloudLightning size={14} /> Test 100
+                <CloudLightning size={14} /> Test export 1000 data
             </button>
 
-            <button onClick={() => exportToSpreadsheet(false)} disabled={isSearching || isImporting || isExporting || isAutoTracking} className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm transition-all ${isExporting ? 'bg-emerald-100 text-emerald-600 cursor-wait' : 'bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-700 active:scale-95 disabled:opacity-50'}`}>
-                {isExporting ? <Activity size={14} className="animate-spin" /> : <Download size={14} />} 
-                {isExporting ? `Sync ${exportProgress}%` : 'Kirim Semua ke G-Sheets'}
+            <button 
+                onClick={() => exportToSpreadsheet(false)} 
+                disabled={isSearching || isImporting || isExporting || isAutoTracking} 
+                className={`flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl font-bold text-[11px] uppercase tracking-wider shadow-sm transition-all min-w-[160px] ${
+                    isExporting 
+                    ? 'bg-emerald-100 text-emerald-600 cursor-wait' 
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-700 active:scale-95 disabled:opacity-50'
+                }`}
+            >
+                {/* Baris Atas: Ikon dan Teks Status */}
+                <div className="flex items-center gap-2">
+                    {isExporting ? <Activity size={14} className="animate-spin" /> : <Download size={14} />} 
+                    <span>{isExporting ? `Sync ${exportProgress}%` : 'Export All To Excel'}</span>
+                </div>
+
+                {/* Baris Bawah: Counter Data (Hanya muncul saat Exporting) */}
+                {isExporting && (
+                    <div className="text-[9px] font-black text-emerald-500 bg-emerald-200/50 px-2 py-0.5 rounded-full animate-pulse">
+                        {(exportProgressCount || 0).toLocaleString('id-ID')} / {totalData.toLocaleString('id-ID')}
+                    </div>
+                )}
             </button>
         </div>
       </div>

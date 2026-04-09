@@ -15,7 +15,7 @@ const API_ORCID      = import.meta.env.VITE_API_ORCID;
 
 // =============================================================
 // URL GOOGLE SCRIPT UNTUK EXPORT SPREADSHEET
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyq77Sx47LW6aS4PccfHWA85rj2iwh0LRGkCsR6f6BaVFo4y0Y8lEFkqKtgPhyUBiM/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby6XEBJgX0Wdq7yxuIST1tWem5YOH3_XwAfY1AcMYDuhuEbEMaYxq4p19MuWMEH0WEy/exec";
 // =============================================================
 
 export const usePencarianController = () => {
@@ -29,6 +29,8 @@ export const usePencarianController = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalData, setTotalData] = useState(0);
   const pageSize = 50;
+  
+  const [exportProgressCount, setExportProgressCount] = useState(0);
   
   const [searchHistory, setSearchHistory] = useState([]);
   
@@ -261,145 +263,90 @@ export const usePencarianController = () => {
   };
   
   // 4. FUNGSI EXPORT KE G-SHEETS
-  const exportToSpreadsheet = async (isTestMode = false) => {
+const exportToSpreadsheet = async (isTestMode = false) => {
     setIsExporting(true);
     setExportProgress(0);
+    setExportProgressCount(0);
     setSuccessSheetUrl(null);
 
-    try {
-      let keepFetching = true;
-      let from = 0;
-      const step = isTestMode ? 100 : 1500;
-      let sheetId = null;
-      let sheetUrl = null;
-      let isInit = true;
-      let rowCount = 0;
+    let allDataAccumulated = []; // Untuk menampung semua data
+    let totalProcessed = 0;
 
-      const headers = [
-        "No", "Nama Lulusan", "NIM", "Tahun Masuk", "Tanggal Lulus", "Fakultas", 
-        "Program Studi", "Email", "No Hp", "Kategori", "Posisi", "Tempat bekerja", 
-        "Alamat bekerja", "Sosmed Kantor", "Linkedin", "IG", "Fb", "Tiktok", "Score (%)", "Status"
-      ];
+    const headers = [
+      "No", "Nama Lulusan", "NIM", "Tahun Masuk", "Tanggal Lulus", "Fakultas", 
+      "Program Studi", "Email", "No Hp", "Kategori", "Posisi", "Tempat bekerja", 
+      "Alamat bekerja", "Sosmed Kantor", "Linkedin", "IG", "Fb", "Tiktok", "Score (%)", "Status"
+    ];
 
-      while (keepFetching) {
-        let query = supabase.from('alumni').select('*').order('id', { ascending: true });
-        if (isTestMode) {
-            query = query.range(0, 99);
-            keepFetching = false;
-        } else {
-            query = query.range(from, from + step - 1);
-        }
+    // --- FUNGSI RECURSIVE UNTUK AMBIL DATA ---
+    const fetchAndAccumulate = async (offset) => {
+      const step = 1000; // Limit aman Supabase
+      const to = offset + step - 1;
 
-        const { data, error } = await query;
-        if (error) throw error;
+      console.log(`Mengambil data batch untuk Excel: ${offset} sampai ${to}...`);
+
+      const { data, error } = await supabase
+        .from('alumni')
+        .select('*')
+        .range(offset, to)
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Map data ke format Array murni
+        const batchData = data.map((item, index) => [
+          totalProcessed + index + 1,
+          item.nama || '', item.nim || '', item.tahun_masuk || '', item.tanggal_lulus || '',
+          item.fakultas || '', item.prodi || '', item.email_alumni || '', item.no_hp || '',
+          item.kategori_kerja || '', item.pekerjaan || '', item.instansi || '',
+          item.alamat_bekerja || '', item.instansi_sosmed || '', item.linkedin_url || '',
+          item.instagram_url || '', item.facebook_url || '', item.tiktok_url || '',
+          item.confidence_score || 0, item.status || ''
+        ]);
+
+        // Masukkan ke penampung utama
+        allDataAccumulated = [...allDataAccumulated, ...batchData];
         
-        if (data && data.length > 0) {
-          const batchData = data.map((item, index) => [
-            rowCount + index + 1, item.nama || '', item.nim || '', item.tahun_masuk || '', item.tanggal_lulus || item.tahun || '',
-            item.fakultas || '', item.prodi || '', item.email_alumni || '', item.no_hp || '', item.kategori_kerja || '',
-            item.pekerjaan || '', item.instansi || '', item.alamat_bekerja || '', item.instansi_sosmed || '',
-            item.linkedin_url || '', item.instagram_url || '', item.facebook_url || '', item.tiktok_url || '',
-            item.confidence_score || 0, item.tracking_status || ''
-          ]);
+        totalProcessed += data.length;
+        setExportProgressCount(totalProcessed);
+        
+        // Update Persentase
+        const percent = Math.min(Math.round((totalProcessed / totalData) * 100), 99);
+        setExportProgress(percent);
 
-          rowCount += batchData.length;
-          const payload = isInit ? { action: 'init', headers: headers, data: batchData } : { action: 'append', sheetId: sheetId, data: batchData };
-
-          const response = await fetch(GAS_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
-          });
-
-          const result = await response.json();
-          if (result.status === 'error') throw new Error(result.message);
-
-          if (isInit) {
-            sheetId = result.sheetId;
-            sheetUrl = result.sheetUrl;
-            isInit = false;
-          }
-
-          from += step;
-          const currentProgress = isTestMode ? 100 : Math.min(Math.round((rowCount / totalData) * 100), 99);
-          setExportProgress(currentProgress);
-        } else {
-          keepFetching = false; 
+        // --- CEK APAKAH LANJUT LAGI? ---
+        if (!isTestMode && data.length === step) {
+          // Tidak perlu jeda lama karena tidak kirim ke Google (hanya narik dari Supabase)
+          return await fetchAndAccumulate(offset + step); 
         }
       }
+    };
+
+    try {
+      await fetchAndAccumulate(0); // Mulai proses penarikan data
+      
+      // PROSES PEMBUATAN FILE EXCEL SETELAH SEMUA DATA TERKUMPUL
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...allDataAccumulated]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Alumni");
+
+      // Download file secara lokal (Direct)
+      const fileName = `Master_Tracer_Alumni_${new Date().getTime()}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
 
       setExportProgress(100);
-      if (sheetUrl) {
-          setSuccessSheetUrl(sheetUrl);
-          window.open(sheetUrl, '_blank');
-      }
-    } catch (error) { 
-      console.error("Export error:", error); 
-      alert("Gagal menyinkronkan ke G-Sheets."); 
+      alert("Ekspor Excel Berhasil! File sedang didownload.");
+
+    } catch (err) {
+      console.error("Export Fail:", err);
+      alert("Terjadi kesalahan saat memproses data besar.");
     } finally {
       setIsExporting(false);
-      setExportProgress(0);
-    } 
+    }
   };
 
   // 5. FUNGSI IMPORT EXCEL
-  const handleImportExcel = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    setImportProgress(0);
-    setImportStatus('Membaca file Excel...');
-
-    setTimeout(() => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                const totalRows = jsonData.length;
-                if(totalRows === 0) { alert("Data Excel kosong!"); setIsImporting(false); return; }
-
-                const CHUNK_SIZE = 1000;
-                let insertedCount = 0;
-
-                for (let i = 0; i < totalRows; i += CHUNK_SIZE) {
-                    const chunk = jsonData.slice(i, i + CHUNK_SIZE).map(item => ({
-                        nama: item["Nama Lulusan"] || item["NAMA"] || item.nama || '',
-                        nim: item["NIM"]?.toString() || item.nim?.toString() || '', 
-                        tahun_masuk: item["Tahun Masuk"]?.toString() || '',
-                        tanggal_lulus: item["Tanggal Lulus"] || item["Tahun Lulus"]?.toString() || '',
-                        fakultas: item["Fakultas"] || item["FAKULTAS"] || '', 
-                        prodi: item["Program Studi"] || item["PRODI"] || '',
-                        tracking_status: 'Belum Dilacak', confidence_score: 0
-                    }));
-
-                    const { error } = await supabase.from('alumni').insert(chunk);
-                    if (error) throw error;
-                    
-                    insertedCount += chunk.length;
-                    const percent = Math.round((insertedCount / totalRows) * 100);
-                    setImportProgress(percent);
-                    setImportStatus(`Menyimpan ke Database: ${insertedCount.toLocaleString('id-ID')} / ${totalRows.toLocaleString('id-ID')} data`);
-                }
-
-                setImportStatus('Selesai!');
-                setTimeout(() => { 
-                    fetchAlumniPagination(0); 
-                    fetchGlobalStats(); // Update stats setelah import
-                    setIsImporting(false); 
-                    setImportProgress(0); 
-                    setImportStatus(''); 
-                }, 500);
-            } catch (error) { console.error("Import error:", error); alert("Gagal memproses file."); setIsImporting(false); } finally { event.target.value = null; }
-        };
-        reader.readAsArrayBuffer(file);
-    }, 100);
-  };
 
 
   
@@ -409,8 +356,8 @@ export const usePencarianController = () => {
     currentPage, setCurrentPage, totalData, 
     executeSearch, simpanJejak, updateInformasiAlumni, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
-    isImporting, importProgress, importStatus, handleImportExcel,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,
+    isImporting, importProgress, importStatus,
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,exportProgressCount,
     globalStats // <--- Export Stats Global
   };
 };
