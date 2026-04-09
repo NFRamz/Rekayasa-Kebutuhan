@@ -61,7 +61,7 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
     setShowDropdown(false);
   };
 
-  const submitData = async (e) => {
+const submitData = async (e) => {
     e.preventDefault();
     
     if (!formData.lat || !formData.lng) {
@@ -71,22 +71,52 @@ export const usePendataanController = (alumniDB, setAlumniDB) => {
 
     setIsSubmitting(true);
 
+    // KUNCI: Samakan nama field dengan struktur Supabase Anda!
     const newAlumni = { 
-      ...formData, 
-      id: Date.now(), 
-      status: 'Menunggu Verifikasi'
+      nama: formData.nama,
+      nim: formData.nim,
+      tahun: formData.tahun,
+      tahun_masuk: "", // kosongkan jika tidak ditanyakan
+      tanggal_lulus: formData.tahun, // disamakan dgn tahun
+      prodi: formData.prodi,
+      fakultas: formData.kampus, // Kampus masuk ke fakultas sementara
+      pekerjaan: formData.pekerjaan,
+      instansi: formData.instansi,
+      alamat: formData.alamat,
+      
+      // Tambahan kordinat jika tabel Supabase Anda punya kolom lat & lng
+      // Jika tidak punya, ini akan diabaikan
+      // lat: formData.lat, 
+      // lng: formData.lng, 
+      
+      // STATUS WAJIB AGAR MUNCUL DI TABEL TRACER
+      tracking_status: 'Belum Dilacak',
+      confidence_score: 0,
+      jejak_digital: []
     };
     
     if (setAlumniDB) setAlumniDB([...(alumniDB || []), newAlumni]);
 
     if (USE_SUPABASE) {
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/alumni`, {
+        const { error } = await fetch(`${SUPABASE_URL}/rest/v1/alumni`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+          headers: { 
+            'Content-Type': 'application/json', 
+            apikey: SUPABASE_KEY, 
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            'Prefer': 'return=representation'
+          },
           body: JSON.stringify(newAlumni)
-        });
-      } catch (err) { console.error("Gagal simpan ke DB", err); }
+        }).then(res => res.json());
+
+        if(error) {
+            console.error("Gagal simpan ke DB", error);
+            alert("Terjadi kesalahan saat menyimpan ke database.");
+        }
+      } catch (err) { 
+        console.error("Gagal koneksi", err); 
+      }
     }
     
     setIsSubmitting(false);

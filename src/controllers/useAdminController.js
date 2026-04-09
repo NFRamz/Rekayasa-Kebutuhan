@@ -1,50 +1,51 @@
+import { createClient } from '@supabase/supabase-js';
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export const useAdminController = (alumniDB, setAlumniDB) => {
+  
+  // Filter ketat: Hanya menampilkan data yang statusnya "Menunggu Verifikasi"
   const pendingData = alumniDB.filter(a => a.status === 'Menunggu Verifikasi');
 
   const verifyAlumni = async (id, isValid) => {
-
-// 1. logic jika klik valid  
     if (isValid) {
-      setAlumniDB(alumniDB.map(a => a.id === id ? { ...a, status: 'Terverifikasi' } : a));
-      
-      if (USE_SUPABASE) {
-        try {
-          await fetch(`${SUPABASE_URL}/rest/v1/alumni?id=eq.${id}`, {
-            method: 'PATCH', 
-            headers: { 
-              'Content-Type': 'application/json', 
-              'apikey': SUPABASE_KEY, 
-              'Authorization': `Bearer ${SUPABASE_KEY}` 
-            },
-            body: JSON.stringify({ status: 'Terverifikasi' })
-          });
-        } catch (err) { 
-          console.error("Gagal memperbarui status di Supabase:", err); 
-        }
+      // 1. Update State di UI agar tulisan "Menunggu Verifikasi" berubah jadi "Terverifikasi"
+      setAlumniDB(prev => prev.map(a => 
+        a.id === id ? { ...a, status: 'Terverifikasi' } : a
+      ));
+
+      // 2. Update kolom status di Database Supabase
+      try {
+        const { error } = await supabase
+          .from('alumni')
+          .update({ status: 'Terverifikasi' })
+          .eq('id', id);
+
+        if (error) throw error;
+        console.log("Status berhasil diperbarui ke Terverifikasi");
+      } catch (err) {
+        console.error("Gagal update status di database:", err);
       }
     } 
-
-    // 2. Logika Jika Admin Klik "Tolak"
+    
     else {
+      // Jika Admin menolak, hapus data dari daftar
+      const confirmDelete = window.confirm("Apakah Anda yakin ingin menolak dan menghapus data ini?");
+      if (!confirmDelete) return;
 
-      setAlumniDB(alumniDB.filter(a => a.id !== id));
+      setAlumniDB(prev => prev.filter(a => a.id !== id));
 
-      if (USE_SUPABASE) {
-        try {
-          await fetch(`${SUPABASE_URL}/rest/v1/alumni?id=eq.${id}`, {
-            method: 'DELETE',
-            headers: { 
-              'apikey': SUPABASE_KEY, 
-              'Authorization': `Bearer ${SUPABASE_KEY}` 
-            }
-          });
-        } catch (err) { 
-          console.error("Gagal menghapus data di Supabase:", err); 
-        }
+      try {
+        const { error } = await supabase
+          .from('alumni')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error("Gagal menghapus data:", err);
       }
     }
   };
