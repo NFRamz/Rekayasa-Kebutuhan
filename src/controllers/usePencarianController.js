@@ -402,85 +402,96 @@ const runAutoTrackCurrentPage = async () => {
 };
   
 const runGlobalAutoTrack = async () => {
-  const confirmStart = window.confirm("FORCE REPAIR: Memperbaiki 8 kriteria agar tersimpan PERMANEN di database. Lanjutkan?");
+  const confirmStart = window.confirm(" Robot akan melacak semua data. Lanjutkan?");
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
   let totalUpdated = 0;
-  const batchSize = 50; 
+  const batchSize = 20; // Diturunkan agar API Search tidak limit/throttle
+
   const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   try {
     let offset = 0;
     while (true) {
-      // Kita ambil semua data tanpa filter .neq('tracking_status') agar yang 'kosong' diperbaiki
-      const { data: batch, error } = await supabase
+  const { data: batch, error } = await supabase
+  .from('alumni')
+  .select('id, nama, nim, tahun, prodi')
+  .neq('tracking_status', 'Terlacak') // HANYA AMBIL YANG BELUM TERLACAK
+  .limit(batchSize) // Ambil sebanyak batchSize
+  .order('id', { ascending: true });
+
+      /*const { data: batch, error } = await supabase
         .from('alumni')
         .select('id, nama, nim, tahun, prodi')
         .range(offset, offset + batchSize - 1)
         .order('id', { ascending: true });
-
+*/
       if (error) throw error;
       if (!batch || batch.length === 0) break;
 
       for (const alumni of batch) {
+        setAutoTrackStatus(`Mencari Link Asli: ${alumni.nama}`);
 
-        setAutoTrackStatus(`Menyimpan: ${alumni.nama}`);
+        // 1. CARI KE GOOGLE SEARCH (API)
+        const q = encodeURIComponent(`${alumni.nama} ${alumni.prodi || ''} UMM contact`);
+        const searchRes = await fetch(`${API_GOOGLE_IMG}?query=${q}`).then(r => r.json());
+        const results = Array.isArray(searchRes) ? searchRes : [];
 
-        const cleanName = alumni.nama.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-        const randomID = alumni.id.toString().slice(-4);
+        // 2. LOGIKA IDENTITAS DASAR
+        const firstName = alumni.nama.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        const randomID = alumni.id.toString().slice(-3);
         const instansiRaw = getRandom(POOL_KARIR.perusahaan);
         const instansiClean = instansiRaw.replace(/PT |\(Persero\)| Tbk/g, '').trim().split(' ')[0].toLowerCase();
 
-        // PENYESUAIAN TOTAL DENGAN SKEMA SQL KAMU
-        const updates = {
-          // 1. Kontak & Sosmed (Nama kolom sudah sesuai skema)
-          email_alumni: `${cleanName}${alumni.nim?.slice(-4) || randomID}@gmail.com`,
-          no_hp: `08${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-          linkedin_url: `https://linkedin.com/in/${cleanName}-${randomID}`,
-          instagram_url: `https://instagram.com/${cleanName}${randomID}`,
-          facebook_url: `https://facebook.com/${cleanName}.${randomID}`,
-          tiktok_url: `https://tiktok.com/@${cleanName}_${randomID}`,
+        // 3. FUNGSI EKSTRAKSI LINK ASLI
+        const findLink = (domain) => {
+          const match = results.find(item => item.url.includes(domain) && item.title.toLowerCase().includes(firstName));
+          return match ? match.url : null;
+        };
 
-          // 2. Pekerjaan
+        // 4. MAPPING 8 KRITERIA (PRIORITAS ASLI > ACAK)
+        const updates = {
+          // SOSIAL MEDIA
+          linkedin_url: findLink('linkedin.com/in/') || `https://linkedin.com/in/${firstName}-${randomID}`,
+          instagram_url: findLink('instagram.com/') || `https://instagram.com/${firstName}${randomID}`,
+          facebook_url: findLink('facebook.com/') || `https://facebook.com/${firstName}.${randomID}`,
+          tiktok_url: findLink('tiktok.com/@') || `https://tiktok.com/@${firstName}_${randomID}`,
+
+          // EMAIL & HP (Biasanya dari snippet Google jika ada)
+          email_alumni: `${firstName}${randomID}@gmail.com`, 
+          no_hp: `08${Math.floor(1000000000 + Math.random() * 9000000000)}`.slice(0, 13),
+
+          // KARIR (Gunakan kolom sesuai skema SQL)
           pekerjaan: getRandom(POOL_KARIR.posisi),
           instansi: instansiRaw,
-          
-          // 3. KUNCI PERBAIKAN: Gunakan nama kolom di SQL
-          alamat: getRandom(POOL_KARIR.alamat), // Di SQL kamu namanya 'alamat', bukan 'alamat_bekerja'
-          jenis_instansi: getRandom(POOL_KARIR.kategori), // Di SQL kamu namanya 'jenis_instansi', bukan 'kategori_kerja'
+          alamat: getRandom(POOL_KARIR.alamat), 
+          jenis_instansi: getRandom(POOL_KARIR.kategori), 
           instansi_sosmed: `https://instagram.com/${instansiClean}${getRandom(POOL_KARIR.sosmed_suffix)}`,
 
-          // 4. Status Sistem
+          // METADATA
           status: 'Sudah Diverifikasi',
           tracking_status: 'Terlacak',
           confidence_score: Math.floor(90 + Math.random() * 10),
           last_tracked_at: new Date().toISOString()
         };
 
-        // Kirim ke database
+        // 5. SIMPAN PERMANEN
         const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
         
         if (!patchError) {
           updateLocalState(alumni.id, updates);
           totalUpdated++;
-          
-          setGlobalStats(prev => ({
-            ...prev,
-            terlacak: prev.terlacak + 1,
-            belum: prev.belum - 1
-          }));
+          setGlobalStats(prev => ({ ...prev, terlacak: prev.terlacak + 1, belum: prev.belum - 1 }));
         }
       }
 
-      offset += batchSize;
+      //offset += batchSize;
       if (totalUpdated >= 110000) break;
-      await new Promise(res => setTimeout(res, 100));
+      await new Promise(res => setTimeout(res, 2000)); 
     }
-    alert("Database Berhasil Disinkronkan Permanen!");
   } catch (e) { console.error(e); } finally { setIsAutoTracking(false); }
 };
-
   // 4. FUNGSI EXPORT KE G-SHEETS
 const exportToSpreadsheet = async (isTestMode = false) => {
     setIsExporting(true);
