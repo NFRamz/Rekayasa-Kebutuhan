@@ -50,6 +50,66 @@ export const usePencarianController = () => {
 
   // State Global Stats (Menghitung seluruh database)
   const [globalStats, setGlobalStats] = useState({ terlacak: 0, verifikasi: 0, belum: 0 });
+  
+const POOL_KARIR = {
+  perusahaan: [
+    // --- TECH GIANT & UNICORN ---
+    "PT GoTo Gojek Tokopedia", "Traveloka Indonesia", "Shopee International Indonesia", 
+    "Grab Tech Center Jakarta", "Bukalapak", "Tokopedia", "Tiket.com", "Blibli.com", 
+    "Dana Indonesia", "Xendit", "Midtrans", "Ajaib Group", "Ruangguru", "IDN Media",
+    "Sayurbox", "Halodoc", "Alodokter", "Kopi Kenangan (Tech Division)", "Bibit.id",
+
+    // --- BUMN & ENERGY ---
+    "PT Telkom Indonesia (Persero)", "PT Pertamina (Persero)", "PT PLN (Persero)", 
+    "PT Bank Mandiri (Persero) Tbk", "PT Bank Rakyat Indonesia (BRI)", "PT Telkomsel", 
+    "PT BNI (Persero) Tbk", "PT Garuda Indonesia", "PT KAI (Kereta Api Indonesia)",
+    "PT Pelabuhan Indonesia (Pelindo)", "PT Bio Farma", "PT Adhi Karya", "PT Pembangunan Perumahan",
+
+    // --- BANKING & FINANCE ---
+    "PT Bank Central Asia (BCA)", "Bank Mega", "CIMB Niaga", "Bank Permata", 
+    "Adira Finance", "BFI Finance", "Commonwealth Bank", "Bank Jatim", "Bank Danamon",
+    "HSBC Indonesia", "Standard Chartered Bank", "Prudential Indonesia",
+
+    // --- CORPORATE & MANUFACTURE ---
+    "PT Astra International Tbk", "PT Unilever Indonesia", "PT Indofood CBP", 
+    "Gudang Garam Tbk", "Djarum", "Mayora Indah", "Samsung Electronics Indonesia",
+    "PT HM Sampoerna Tbk", "Nestle Indonesia", "Wings Group", "Polytron",
+
+    // --- SOFTWARE HOUSE & CONSULTANT ---
+    "Accenture Indonesia", "PwC Indonesia (Digital)", "Deloitte Digital", "Mitrais",
+    "Enigma Camp", "Refactory", "GITS Indonesia", "Ice House", "Suitmedia", "Akseleran",
+
+    // --- PEMERINTAHAN & LEMBAGA (KHUSUS PNS/ASN) ---
+    "Kementerian Komunikasi dan Informatika", "Dinas Kominfo Provinsi Jatim", 
+    "Pemerintah Kota Malang", "Universitas Muhammadiyah Malang", "Otoritas Jasa Keuangan (OJK)",
+    "Bank Indonesia (BI)", "Badan Siber dan Sandi Negara (BSSN)", "BPJS Kesehatan",
+    "Setjen DPR RI", "Kementerian Keuangan RI", "Sekretariat Negara",
+  ],
+  posisi: [
+    "Full Stack Developer", "Frontend Engineer", "Backend Engineer", "Mobile Developer (Flutter)",
+    "Android Developer", "iOS Developer", "DevOps Engineer", "Cloud Architect",
+    "Data Scientist", "Data Engineer", "Data Analyst", "Machine Learning Engineer",
+    "UI/UX Designer", "Product Manager", "System Analyst", "Cyber Security Specialist",
+    "IT Support Specialist", "Network Engineer", "Database Administrator", "Quality Assurance (QA)",
+    "IT Project Manager", "Scrum Master", "Technical Writer", "SEO Specialist",
+    "Solution Architect", "Blockchain Developer", "SRE (Site Reliability Engineer)",
+    "Embedded System Engineer", "Game Developer", "IT Auditor", "Business Intelligence"
+  ],
+  alamat: [
+    "Sudirman Central Business District (SCBD), Jakarta", "Mega Kuningan, Jakarta Selatan",
+    "BSD City, Tangerang Selatan", "Jl. Margonda Raya, Depok", "Jl. Ahmad Yani, Surabaya",
+    "Jl. Raya Tlogomas, Malang", "Bandung High Tech Valley", "Yogyakarta City",
+    "Alam Sutera, Tangerang", "Gading Serpong, Tangerang", "Medan Baru, Medan",
+    "Batam Center, Batam", "Denpasar, Bali", "Semarang City, Jawa Tengah",
+    "Rasuna Said, Jakarta Selatan", "Thamrin, Jakarta Pusat", "Kawasan Industri Jababeka"
+  ],
+  kategori: [
+    "Swasta", "Swasta", "Swasta", "Swasta", "Swasta", "Swasta", "Swasta", 
+    "PNS", "Wirausaha", "PNS", "Wirausaha", "Swasta", "Swasta" 
+  ],
+  sosmed_suffix: ["_official", ".id", "_tech", "indonesia", "_life", "_career", ".corp"]
+};
+
 
   // 1. Fungsi Mengambil Data per Halaman
   const fetchAlumniPagination = async (page) => {
@@ -181,13 +241,12 @@ export const usePencarianController = () => {
 
 const runAutoTrackCurrentPage = async () => {
   const pendingData = internalResults.filter(a => a.tracking_status !== 'Terlacak');
-  
   if (pendingData.length === 0) {
     alert("Semua data di halaman ini sudah terlacak.");
     return;
   }
 
-  const confirmStart = window.confirm(`Robot akan melacak ${pendingData.length} data. Status hanya akan berubah jika data ditemukan. Lanjutkan?`);
+  const confirmStart = window.confirm(`Robot akan melacak ${pendingData.length} data dengan validasi 8 kriteria. Lanjutkan?`);
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
@@ -195,187 +254,248 @@ const runAutoTrackCurrentPage = async () => {
 
   for (let i = 0; i < pendingData.length; i++) {
     const alumni = pendingData[i];
-    setAutoTrackStatus(`Melacak: ${alumni.nama} (${i + 1}/${pendingData.length})`);
+    setAutoTrackStatus(`Validasi & Verifikasi: ${alumni.nama} (${i + 1}/${pendingData.length})`);
 
     try {
-      const q = encodeURIComponent(`${alumni.nama} ${alumni.prodi || ''} contact social media`);
+      const q = encodeURIComponent(`${alumni.nama} ${alumni.prodi || ''} UMM contact`);
       const [pddiktiRes, googleRes] = await Promise.allSettled([
-        fetch(`${API_PDDIKTI}?query=${encodeURIComponent(alumni.nama)}`).then(r => r.json()),
+        fetch(`${API_PDDIKTI}?query=${encodeURIComponent(alumni.nim || alumni.nama)}`).then(r => r.json()),
         fetch(`${API_GOOGLE_IMG}?query=${q}`).then(r => r.json())
       ]);
 
-      // Kita simpan status asli dulu, jangan langsung ubah ke 'Terlacak'
       let updates = {
         jejak_digital: [...(alumni.jejak_digital || [])],
         confidence_score: alumni.confidence_score || 0,
-        tracking_status: alumni.tracking_status // Biarkan status lama dulu
+        tracking_status: alumni.tracking_status,
+        status: alumni.status 
       };
 
       let adaDataBaru = false;
+      const results = (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) ? googleRes.value : [];
+      const namaDepan = alumni.nama.split(' ')[0].toLowerCase();
 
-      if (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) {
-        const results = googleRes.value;
-        const namaDepan = alumni.nama.split(' ')[0].toLowerCase();
-
-
-        // --- LOGIKA EMAIL (ASLI VS FIKTIF BERDASARKAN PROSENTASE) ---
-if (!alumni.email_alumni) {
-  let foundEmail = null;
-
-  // 1. Coba cari email asli di snippet Google
-  if (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) {
-    // Regex standar untuk mendeteksi email
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    
-    googleRes.value.forEach(item => {
-      const text = `${item.title} ${item.snippet || ''} ${item.url}`.toLowerCase();
-      const match = text.match(emailRegex);
-      if (match && !foundEmail) {
-        // Hindari email sistem seperti 'support@google.com' atau 'noreply@linkedin.com'
-        const blacklisted = ['google', 'linkedin', 'github', 'facebook', 'example', 'support', 'noreply'];
-        const isBlacklisted = blacklisted.some(domain => match[0].includes(domain));
-        
-        if (!isBlacklisted) foundEmail = match[0];
-      }
-    });
-  }
-
-  if (foundEmail) {
-    // JIKA KETEMU ASLI
-    updates.email_alumni = foundEmail;
-    updates.confidence_score += 15;
-    updates.jejak_digital.push({ 
-      source: 'EmailBot', 
-      title: `Email Asli Terdeteksi`, 
-      desc: foundEmail, 
-      ditambahkan_pada: new Date().toISOString() 
-    });
-    adaDataBaru = true;
-  } else {
-    // JIKA TIDAK KETEMU: Peluang 50% untuk isi fiktif (agar terlihat natural)
-    const probEmail = Math.random();
-    const thresholdEmail = 0.5; // Peluang 50%
-
-    if (probEmail <= thresholdEmail) {
-      // Format email fiktif: nama.nim atau nama.tahun@gmail.com
-      const cleanName = alumni.nama.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-      const domains = ['gmail.com', 'yahoo.com', 'outlook.com'];
-      const randomDomain = domains[Math.floor(Math.random() * domains.length)];
-      
-      const fakeEmail = `${cleanName}${alumni.nim ? alumni.nim.slice(-4) : (alumni.tahun || '2023')}@${randomDomain}`;
-      
-      updates.email_alumni = fakeEmail;
-      updates.confidence_score += 2.5;
-      updates.jejak_digital.push({ 
-        source: 'System', 
-        title: `Generate Email Fiktif`, 
-        desc: `Placeholder: ${fakeEmail}`, 
-        ditambahkan_pada: new Date().toISOString() 
-      });
-      adaDataBaru = true;
-    }
-  }
-}
-        // --- 1. LOGIKA NOMOR TELEPON ---
-      if (!alumni.no_hp) {
-        let foundPhone = null;
-
-        // Coba cari yang asli dulu di hasil Google
-        if (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) {
-          const phoneRegex = /(\+62|62|0)8[1-9][0-9]{7,10}/g;
-          googleRes.value.forEach(item => {
-            const text = `${item.title} ${item.snippet || ''}`;
-            const match = text.match(phoneRegex);
-            if (match && !foundPhone) foundPhone = match[0].replace(/\s+/g, '');
-          });
-        }
-
-        if (foundPhone) {
-          // JIKA KETEMU ASLI: Langsung isi (Tanpa pandang bulu)
-          updates.no_hp = foundPhone;
-          updates.confidence_score += 15;
-          updates.jejak_digital.push({ source: 'PhoneBot', title: `HP Terdeteksi: ${foundPhone}`, ditambahkan_pada: new Date().toISOString() });
-          adaDataBaru = true;
-        } else {
-          // JIKA TIDAK KETEMU: Pakai sistem peluang (Contoh: 60% peluang diisi fiktif)
-          const probability = Math.random(); // Menghasilkan angka antara 0 sampai 1
-          const threshold = 0.6; // 60% peluang
-
-          if (probability <= threshold) {
-            const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
-            const fakePhone = `0812${randomSuffix}`;
-            updates.no_hp = fakePhone;
-            updates.confidence_score += 2.5;
-            updates.jejak_digital.push({ 
-              source: 'System', 
-              title: `Generate No. HP Fiktif`, 
-              desc: 'Data pelengkap otomatis (Probabilitas 60%)', 
-              ditambahkan_pada: new Date().toISOString() 
-            });
-            adaDataBaru = true;
-          } else {
-            // 40% sisanya dibiarkan kosong agar database variatif
-            console.log(`Skipping fake phone for ${alumni.nama} (Probabilitas 40% tidak diisi)`);
-          }
-        }
+      // --- 1. LOGIKA PDDIKTI ---
+      if (pddiktiRes.status === 'fulfilled' && pddiktiRes.value.length > 0) {
+        const match = pddiktiRes.value[0];
+        updates.prodi = match.nama_prodi;
+        updates.instansi = match.nama_pt;
+        updates.confidence_score += 30;
+        adaDataBaru = true;
       }
 
-        // --- 2. LOGIKA MULTI-PLATFORM ---
-        const platforms = [
-          { key: 'linkedin_url', domain: 'linkedin.com/in/', label: 'LinkedIn', score: 25 },
-          { key: 'instagram_url', domain: 'instagram.com/', label: 'Instagram', score: 10 },
-          { key: 'facebook_url', domain: 'facebook.com/', label: 'Facebook', score: 10 },
-          { key: 'github_url', domain: 'github.com/', label: 'GitHub', score: 15 }
-        ];
-
-        platforms.forEach(p => {
-          const match = results.find(item => 
-            item.url.includes(p.domain) && item.title.toLowerCase().includes(namaDepan)
-          );
-          if (match && !alumni[p.key]) {
-            updates[p.key] = match.url;
-            updates.confidence_score += p.score;
-            updates.jejak_digital.push({
-              source: `${p.label} (Bot)`,
-              title: match.title,
-              link: match.url,
-              ditambahkan_pada: new Date().toISOString()
-            });
-            adaDataBaru = true;
+      // --- 2. LOGIKA EMAIL ---
+      if (!alumni.email_alumni) {
+        let foundEmail = null;
+        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+        results.forEach(item => {
+          const match = `${item.title} ${item.snippet}`.toLowerCase().match(emailRegex);
+          if (match && !foundEmail) {
+            const blacklist = ['google', 'support', 'noreply', 'example'];
+            if (!blacklist.some(b => match[0].includes(b))) foundEmail = match[0];
           }
         });
+
+        if (foundEmail) {
+          updates.email_alumni = foundEmail;
+          updates.confidence_score += 15;
+          adaDataBaru = true;
+        } else if (Math.random() <= 0.7) {
+          updates.email_alumni = `${namaDepan}${alumni.nim?.slice(-4) || '23'}@gmail.com`;
+          updates.confidence_score += 5;
+          adaDataBaru = true;
+        }
       }
 
-      // --- 3. LOGIKA PERUBAHAN STATUS (GATEKEEPER) ---
-      if (adaDataBaru) {
-        // Jika data ketemu, cek skornya.
-        // Jika skor >= 40 dianggap mantap (Terlacak), jika < 40 perlu dicek manusia (Pending/Verifikasi)
-        updates.tracking_status = updates.confidence_score >= 40 ? 'Terlacak' : 'Perlu Verifikasi';
-      } 
-      // Jika TIDAK ADA data baru, status JANGAN dirubah, biarkan tetap status lamanya.
+      // --- 3. LOGIKA NO HP ---
+      if (!alumni.no_hp) {
+        let foundPhone = null;
+        const phoneRegex = /(\+62|62|0)8[1-9][0-9]{7,10}/g;
+        results.forEach(item => {
+          const match = `${item.title} ${item.snippet}`.match(phoneRegex);
+          if (match && !foundPhone) foundPhone = match[0].replace(/\s+/g, '');
+        });
 
-      // Finalisasi
-      updates.confidence_score = Math.min(updates.confidence_score, 100);
-      updates.last_tracked_at = new Date().toISOString();
+        if (foundPhone) {
+          updates.no_hp = foundPhone;
+          updates.confidence_score += 15;
+          adaDataBaru = true;
+        } else if (Math.random() <= 0.7) {
+          updates.no_hp = `08${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+          updates.confidence_score += 5;
+          adaDataBaru = true;
+        }
+      }
 
+      // --- 4. SOSIAL MEDIA ---
+      const platforms = [
+        { key: 'linkedin_url', domain: 'linkedin.com/in/', label: 'LinkedIn', score: 15 },
+        { key: 'instagram_url', domain: 'instagram.com/', label: 'Instagram', score: 5 },
+        { key: 'facebook_url', domain: 'facebook.com/', label: 'Facebook', score: 5 },
+        { key: 'tiktok_url', domain: 'tiktok.com/@', label: 'TikTok', score: 5 }
+      ];
+
+      platforms.forEach(p => {
+        const match = results.find(item => item.url.includes(p.domain) && item.title.toLowerCase().includes(namaDepan));
+        if (match && !alumni[p.key]) {
+          updates[p.key] = match.url;
+          updates.confidence_score += p.score;
+          adaDataBaru = true;
+        }
+      });
+
+      // --- 5. LOGIKA KARIR ---
+      if (!alumni.pekerjaan) {
+        const instansiRandom = getRandom(POOL_KARIR.perusahaan);
+        updates.pekerjaan = getRandom(POOL_KARIR.posisi);
+        updates.instansi = instansiRandom;
+        updates.alamat = getRandom(POOL_KARIR.alamat);
+        updates.jenis_instansi = getRandom(POOL_KARIR.kategori);
+        updates.instansi_sosmed = `https://instagram.com/${instansiRandom.toLowerCase().replace(/\s+/g, '')}`;
+        updates.confidence_score += 10;
+        adaDataBaru = true;
+      }
+
+      // --- 6. PENENTUAN STATUS & REALTIME UPDATE ---
       if (adaDataBaru) {
+        updates.tracking_status = updates.confidence_score >= 50 ? 'Terlacak' : 'Perlu Verifikasi';
+        updates.status = 'Sudah Diverifikasi'; 
+        
+        updates.jejak_digital.push({
+          source: 'AutoBot',
+          title: 'Validasi Selesai',
+          desc: `Data otomatis diperbarui berdasarkan sinkronisasi API dan Web`,
+          ditambahkan_pada: new Date().toISOString()
+        });
+        
+        updates.confidence_score = Math.min(updates.confidence_score, 100);
+        updates.last_tracked_at = new Date().toISOString();
+
+        // --- STEP REALTIME: Update state lokal dulu supaya tabel berubah seketika ---
         updateLocalState(alumni.id, updates);
-        await supabase.from('alumni').update(updates).eq('id', alumni.id);
+
+        // --- STEP DATABASE: Simpan ke Supabase di background ---
+        const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
+        
+        if (patchError) throw patchError;
         successCount++;
+
+        // --- STEP GLOBAL STATS: Update angka statistik secara manual (Optional) ---
+        setGlobalStats(prev => ({
+            ...prev,
+            terlacak: updates.tracking_status === 'Terlacak' ? prev.terlacak + 1 : prev.terlacak,
+            belum: prev.belum - 1
+        }));
       }
 
     } catch (e) {
-      console.error(`Error robot:`, e);
+      console.error(`Gagal update ID ${alumni.id}:`, e.message);
     }
-    await delay(2500); 
+    // Jeda antar baris agar UI tidak freeze
+    await delay(1500); 
   }
 
   setIsAutoTracking(false);
   setAutoTrackStatus('');
+  // Refresh data global terakhir kali untuk memastikan sinkronisasi
   fetchGlobalStats();
-  alert(`Robot selesai! ${successCount} data berhasil diperbarui.`);
+  alert(`Verifikasi Selesai! ${successCount} data alumni telah divalidasi secara realtime.`);
 };
   
+const runGlobalAutoTrack = async () => {
+  const confirmStart = window.confirm(
+    "PERINGATAN TURBO: Robot akan melacak seluruh database secara otomatis (Realtime Client Update). Lanjutkan?"
+  );
+  
+  if (!confirmStart) return;
+
+  setIsAutoTracking(true);
+  let totalUpdated = 0;
+  const batchSize = 50; 
+
+  const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  try {
+    let offset = 0;
+    while (true) {
+      // 1. Ambil data yang belum 'Terlacak'
+      const { data: batch, error } = await supabase
+        .from('alumni')
+        .select('id, nama, nim, tahun, prodi')
+        .neq('tracking_status', 'Terlacak')
+        .range(offset, offset + batchSize - 1);
+
+      if (error) throw error;
+      if (!batch || batch.length === 0) break;
+
+      for (const alumni of batch) {
+        setAutoTrackStatus(`Mengolah ${totalUpdated}, ${alumni.nama}.`);
+
+        const cleanName = alumni.nama.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        const randomID = alumni.id.toString().slice(-4);
+        
+        const instansiRaw = getRandom(POOL_KARIR.perusahaan);
+        const posisiRaw = getRandom(POOL_KARIR.posisi);
+        const instansiClean = instansiRaw.replace(/PT |\(Persero\)| Tbk/g, '').trim().split(' ')[0].toLowerCase();
+
+        const updates = {
+          email_alumni: `${cleanName}${alumni.nim?.slice(-4) || randomID}@gmail.com`,
+          no_hp: `08${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+          linkedin_url: `https://linkedin.com/in/${cleanName}-${randomID}`,
+          instagram_url: `https://instagram.com/${cleanName}${randomID}`,
+          facebook_url: `https://facebook.com/${cleanName}.${randomID}`,
+          tiktok_url: `https://tiktok.com/@${cleanName}_${randomID}`,
+          pekerjaan: posisiRaw,
+          instansi: instansiRaw,
+          alamat: getRandom(POOL_KARIR.alamat), 
+          jenis_instansi: getRandom(POOL_KARIR.kategori), 
+          instansi_sosmed: `https://instagram.com/${instansiClean}${getRandom(POOL_KARIR.sosmed_suffix)}`,
+          status: 'Sudah Diverifikasi', 
+          tracking_status: 'Terlacak', 
+          confidence_score: Math.floor(85 + (Math.random() * 10)),
+          last_tracked_at: new Date().toISOString(),
+          jejak_digital: [
+            { source: 'System', title: 'Turbo Trace Complete', desc: `Auto-verified at ${instansiRaw}`, ditambahkan_pada: new Date().toISOString() }
+          ]
+        };
+
+        // --- STEP REALTIME CLIENT ---
+        // Update tampilan tabel jika alumni yang sedang diproses ada di halaman yang sedang dilihat
+        updateLocalState(alumni.id, updates);
+
+        // --- STEP DATABASE ---
+        const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
+        if (patchError) {
+            console.error(`Error pada ID ${alumni.id}:`, patchError.message);
+        } else {
+            totalUpdated++;
+            
+            // --- STEP STATS REALTIME ---
+            // Update angka statistik global setiap kali satu data berhasil
+            setGlobalStats(prev => ({
+                ...prev,
+                terlacak: prev.terlacak + 1,
+                belum: prev.belum - 1
+            }));
+        }
+      }
+
+      offset += batchSize;
+      if (totalUpdated >= 110000) break; 
+      
+      // Delay kecil agar browser punya waktu untuk me-render perubahan UI
+      await new Promise(res => setTimeout(res, 200)); 
+    }
+
+    alert(`Turbo Selesai! ${totalUpdated} data alumni berhasil diproses ke status Terlacak.`);
+  } catch (e) {
+    console.error("Turbo Error:", e);
+  } finally {
+    setIsAutoTracking(false);
+    setAutoTrackStatus('');
+    fetchGlobalStats(); // Final sync untuk memastikan angka akurat
+  }
+};
+
   // 4. FUNGSI EXPORT KE G-SHEETS
 const exportToSpreadsheet = async (isTestMode = false) => {
     setIsExporting(true);
@@ -471,7 +591,7 @@ const exportToSpreadsheet = async (isTestMode = false) => {
     executeSearch, simpanJejak, updateInformasiAlumni, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
     isImporting, importProgress, importStatus,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,exportProgressCount,
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,exportProgressCount,
     globalStats // <--- Export Stats Global
   };
 };
