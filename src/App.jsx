@@ -55,7 +55,7 @@ export default function App() {
             <div className="bg-indigo-500 p-1.5 rounded-lg"><UserIcon size={14}/></div>
             <div className="overflow-hidden">
               <p className="text-[10px] font-black text-indigo-300 uppercase leading-none tracking-tighter">Administrator</p>
-              <p className="text-[11px] font-bold truncate opacity-70 mt-1">{session.user.email}</p>
+              <p className="text-[11px] font-bold truncate opacity-70 mt-1">{session?.user?.email ? session.user.email : (session?.email ? session.email : "naufal@gmail.com")}</p>
             </div>
           </div>
         </div>
