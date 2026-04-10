@@ -14,7 +14,7 @@ export default function PencarianView({ setActiveTab }) {
     currentPage, setCurrentPage, totalData, searchHistory, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
     isImporting, importProgress, importStatus, handleImportExcel,exportProgressCount,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,
     globalStats 
   } = usePencarianController();
 
@@ -295,6 +295,18 @@ export default function PencarianView({ setActiveTab }) {
                             {isAutoTracking ? autoTrackStatus : 'Lacak Otomatis pada Halaman ini'}
                         </button>
 
+                        <button 
+                            onClick={runGlobalAutoTrack}
+                            disabled={isAutoTracking || isSearching || isExporting || isImporting}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all w-full sm:w-auto justify-center ${
+                                isAutoTracking 
+                                ? 'bg-green-100 text-purple-600 cursor-wait' 
+                                : 'bg-gradient-to-r from-green-600 to-green-600 text-white hover:from-green-700 hover:to-indigo-700 active:scale-95'
+                            }`}
+                        >
+                            {isAutoTracking ? <Activity size={12} className="animate-spin"/> : <Wand size={12} />}
+                            {isAutoTracking ? autoTrackStatus : 'Lacak Otomatis Seluruh Data'}
+                        </button>
 
                         {/*<div className="relative w-full sm:w-48">
                             <Search size={14} className="absolute left-3 top-2 text-gray-400" />
