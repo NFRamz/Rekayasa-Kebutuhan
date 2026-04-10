@@ -3,7 +3,7 @@ import {
   Search, Database, Globe, BookOpen, User, Save, Clock, History, 
   ChevronRight, MapPin, Briefcase, Activity, ChevronLeft, ExternalLink,
   Eye, Edit2, Link, Download, Upload, Smartphone, Building, CloudLightning, 
-  FileCheck, Github, Wand, UserPlus, Info, AlertCircle, CheckCircle2, Timer
+  FileCheck, Github, Wand, UserPlus, Info, AlertCircle, CheckCircle2, Timer, Loader2,
 } from 'lucide-react';
 import { usePencarianController } from '../controllers/usePencarianController';
 
@@ -21,6 +21,18 @@ export default function PencarianView({ setActiveTab }) {
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [showApiPanel, setShowApiPanel] = useState(false);
   const [tableFilter, setTableFilter] = useState('');
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+
+  useEffect(() => {
+    // Mengecek jika alumniDB sudah ter-load (meskipun kosong/length 0, artinya fetch selesai)
+    if (alumniDB) {
+      // Memberikan sedikit delay 500ms agar transisi UI terlihat halus
+      const timer = setTimeout(() => setIsPageLoading(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [alumniDB]);
+  // -----------------------------
 
   // 1. LOGIKA STATISTIK GLOBAL
   const displayStats = globalStats || { terlacak: 0, verifikasi: 0, belum: 0 };
@@ -82,6 +94,17 @@ export default function PencarianView({ setActiveTab }) {
 
   return (
     <div className="max-w-[1600px] w-full mx-auto animate-in fade-in duration-500 px-4 pb-20 font-sans relative">
+      
+      {/* UI LOADING OVERLAY INITIAL DATA */}
+      {isPageLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50/80 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center animate-in zoom-in-95 duration-300 border border-slate-100">
+                <Loader2 size={40} className="text-indigo-600 animate-spin mb-4" />
+                <h3 className="text-lg font-black text-slate-800">Memuat Data...</h3>
+                <p className="text-xs font-bold text-slate-500 mt-1">Menyiapkan dashboard pelacakan alumni</p>
+            </div>
+        </div>
+      )}
       
       {/* UI LOADING OVERLAY IMPORT EXCEL */}
       {isImporting && (
@@ -382,16 +405,16 @@ export default function PencarianView({ setActiveTab }) {
                             <h5 className="font-black text-slate-900 text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-2 mb-2"><History className="text-indigo-600" size={14} /> Audit Trail Perubahan</h5>
                             <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
                                 {selectedAlumni.jejak_digital?.map((jejak, i) => (
-                                    <div key={i} className={`p-3 rounded-xl border text-[10px] shadow-sm ${jejak.source.includes("SISTEM") ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
+                                    <div key={i} className={`p-3 rounded-xl border text-[13px] shadow-sm ${jejak.source.includes("SISTEM") ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
                                         <div className="flex justify-between items-start mb-1">
                                           <span className={`font-black uppercase px-1.5 py-0.5 rounded text-[7px] ${jejak.source.includes("SISTEM") ? 'bg-amber-600 text-white' : 'bg-indigo-600 text-white'}`}>{jejak.source}</span>
-                                          <span className="text-[8px] text-slate-400 flex items-center gap-1"><Clock size={10}/> {new Date(jejak.ditambahkan_pada).toLocaleDateString()}</span>
+                                          <span className="text-[11px] text-slate-400 flex items-center gap-1"><Clock size={10}/> {new Date(jejak.ditambahkan_pada).toLocaleDateString()}</span>
                                         </div>
                                         <p className="font-bold text-slate-800">{jejak.title}</p>
                                         <p className="text-slate-500 mt-1 italic">{jejak.desc}</p>
                                     </div>
                                 ))}
-                                {(!selectedAlumni.jejak_digital || selectedAlumni.jejak_digital.length === 0) && <p className="text-[9px] text-slate-400 italic text-center py-2">Belum ada riwayat.</p>}
+                                {(!selectedAlumni.jejak_digital || selectedAlumni.jejak_digital.length === 0) && <p className="text-[11px] text-slate-400 italic text-center py-2">Belum ada riwayat.</p>}
                             </div>
                         </div>
 
