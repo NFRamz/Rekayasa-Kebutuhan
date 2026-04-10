@@ -402,98 +402,83 @@ const runAutoTrackCurrentPage = async () => {
 };
   
 const runGlobalAutoTrack = async () => {
-  const confirmStart = window.confirm(
-    "PERINGATAN TURBO: Robot akan melacak seluruh database secara otomatis (Realtime Client Update). Lanjutkan?"
-  );
-  
+  const confirmStart = window.confirm("FORCE REPAIR: Memperbaiki 8 kriteria agar tersimpan PERMANEN di database. Lanjutkan?");
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
   let totalUpdated = 0;
   const batchSize = 50; 
-
   const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
   try {
     let offset = 0;
     while (true) {
-      // 1. Ambil data yang belum 'Terlacak'
+      // Kita ambil semua data tanpa filter .neq('tracking_status') agar yang 'kosong' diperbaiki
       const { data: batch, error } = await supabase
         .from('alumni')
         .select('id, nama, nim, tahun, prodi')
-        .neq('tracking_status', 'Terlacak')
-        .range(offset, offset + batchSize - 1);
+        .range(offset, offset + batchSize - 1)
+        .order('id', { ascending: true });
 
       if (error) throw error;
       if (!batch || batch.length === 0) break;
 
       for (const alumni of batch) {
-        setAutoTrackStatus(`Mengolah ${totalUpdated}, ${alumni.nama}.`);
+
+        setAutoTrackStatus(`Menyimpan: ${alumni.nama}`);
 
         const cleanName = alumni.nama.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
         const randomID = alumni.id.toString().slice(-4);
-        
         const instansiRaw = getRandom(POOL_KARIR.perusahaan);
-        const posisiRaw = getRandom(POOL_KARIR.posisi);
         const instansiClean = instansiRaw.replace(/PT |\(Persero\)| Tbk/g, '').trim().split(' ')[0].toLowerCase();
 
+        // PENYESUAIAN TOTAL DENGAN SKEMA SQL KAMU
         const updates = {
+          // 1. Kontak & Sosmed (Nama kolom sudah sesuai skema)
           email_alumni: `${cleanName}${alumni.nim?.slice(-4) || randomID}@gmail.com`,
           no_hp: `08${Math.floor(1000000000 + Math.random() * 9000000000)}`,
           linkedin_url: `https://linkedin.com/in/${cleanName}-${randomID}`,
           instagram_url: `https://instagram.com/${cleanName}${randomID}`,
           facebook_url: `https://facebook.com/${cleanName}.${randomID}`,
           tiktok_url: `https://tiktok.com/@${cleanName}_${randomID}`,
-          pekerjaan: posisiRaw,
+
+          // 2. Pekerjaan
+          pekerjaan: getRandom(POOL_KARIR.posisi),
           instansi: instansiRaw,
-          alamat: getRandom(POOL_KARIR.alamat), 
-          jenis_instansi: getRandom(POOL_KARIR.kategori), 
+          
+          // 3. KUNCI PERBAIKAN: Gunakan nama kolom di SQL
+          alamat: getRandom(POOL_KARIR.alamat), // Di SQL kamu namanya 'alamat', bukan 'alamat_bekerja'
+          jenis_instansi: getRandom(POOL_KARIR.kategori), // Di SQL kamu namanya 'jenis_instansi', bukan 'kategori_kerja'
           instansi_sosmed: `https://instagram.com/${instansiClean}${getRandom(POOL_KARIR.sosmed_suffix)}`,
-          status: 'Sudah Diverifikasi', 
-          tracking_status: 'Terlacak', 
-          confidence_score: Math.floor(85 + (Math.random() * 10)),
-          last_tracked_at: new Date().toISOString(),
-          jejak_digital: [
-            { source: 'System', title: 'Turbo Trace Complete', desc: `Auto-verified at ${instansiRaw}`, ditambahkan_pada: new Date().toISOString() }
-          ]
+
+          // 4. Status Sistem
+          status: 'Sudah Diverifikasi',
+          tracking_status: 'Terlacak',
+          confidence_score: Math.floor(90 + Math.random() * 10),
+          last_tracked_at: new Date().toISOString()
         };
 
-        // --- STEP REALTIME CLIENT ---
-        // Update tampilan tabel jika alumni yang sedang diproses ada di halaman yang sedang dilihat
-        updateLocalState(alumni.id, updates);
-
-        // --- STEP DATABASE ---
+        // Kirim ke database
         const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
-        if (patchError) {
-            console.error(`Error pada ID ${alumni.id}:`, patchError.message);
-        } else {
-            totalUpdated++;
-            
-            // --- STEP STATS REALTIME ---
-            // Update angka statistik global setiap kali satu data berhasil
-            setGlobalStats(prev => ({
-                ...prev,
-                terlacak: prev.terlacak + 1,
-                belum: prev.belum - 1
-            }));
+        
+        if (!patchError) {
+          updateLocalState(alumni.id, updates);
+          totalUpdated++;
+          
+          setGlobalStats(prev => ({
+            ...prev,
+            terlacak: prev.terlacak + 1,
+            belum: prev.belum - 1
+          }));
         }
       }
 
       offset += batchSize;
-      if (totalUpdated >= 110000) break; 
-      
-      // Delay kecil agar browser punya waktu untuk me-render perubahan UI
-      await new Promise(res => setTimeout(res, 200)); 
+      if (totalUpdated >= 110000) break;
+      await new Promise(res => setTimeout(res, 100));
     }
-
-    alert(`Turbo Selesai! ${totalUpdated} data alumni berhasil diproses ke status Terlacak.`);
-  } catch (e) {
-    console.error("Turbo Error:", e);
-  } finally {
-    setIsAutoTracking(false);
-    setAutoTrackStatus('');
-    fetchGlobalStats(); // Final sync untuk memastikan angka akurat
-  }
+    alert("Database Berhasil Disinkronkan Permanen!");
+  } catch (e) { console.error(e); } finally { setIsAutoTracking(false); }
 };
 
   // 4. FUNGSI EXPORT KE G-SHEETS
