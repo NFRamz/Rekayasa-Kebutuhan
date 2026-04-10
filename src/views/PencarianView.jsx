@@ -337,7 +337,7 @@ export default function PencarianView({ setActiveTab }) {
                                         </div>
                                     </td>
                                     <td className="p-4"><div className="font-bold text-slate-700 text-xs">{item.prodi || '-'}</div><div className="text-[10px] text-slate-400">Angkatan {item.tahun || '-'}</div></td>
-                                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold"><Briefcase size={10} /> {item.kategori_kerja || 'Belum Diisi'}</span></td>
+                                    <td className="p-4"><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold"><Briefcase size={10} /> {item.jenis_instansi || 'Belum Diisi'}</span></td>
                                     <td className="p-4"><span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold ${getStatusColor(item.tracking_status)}`}><div className={`w-1.5 h-1.5 rounded-full ${getStatusDot(item.tracking_status)}`}></div>{item.tracking_status || 'Menunggu'}</span></td>
                                     <td className="p-4">
                                         <div className="w-20">
@@ -400,15 +400,15 @@ export default function PencarianView({ setActiveTab }) {
                         {/* 4. KARIR & INSTANSI */}
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><Briefcase size={12}/> Karir & Tempat Bekerja</label>
-                            <select key={"kat-"+selectedAlumni.kategori_kerja} className="w-full text-xs font-bold p-2 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.kategori_kerja} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'kategori_kerja', e.target.value)}>
+                            <select key={"kat-"+selectedAlumni.jenis_instansi} className="w-full text-xs font-bold p-2 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.jenis_instansi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'kategori_kerja', e.target.value)}>
                                 <option value="">Pilih Kategori Kerja...</option>
                                 <option value="PNS">PNS / ASN</option>
-                                <option value="Swasta">Pegawai Swasta</option>
+                                <option value="Swasta">Swasta</option>
                                 <option value="Wirausaha">Wirausaha / Founder</option>
                             </select>
                             <input key={"pek-"+selectedAlumni.pekerjaan} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.pekerjaan} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'pekerjaan', e.target.value)} placeholder="Posisi / Jabatan" />
                             <input key={"inst-"+selectedAlumni.instansi} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.instansi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'instansi', e.target.value)} placeholder="Nama Tempat Bekerja" />
-                            <textarea key={"almbk-"+selectedAlumni.alamat_bekerja} className="w-full text-xs font-bold p-2 border rounded-lg h-12 resize-none outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.alamat_bekerja} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'alamat_bekerja', e.target.value)} placeholder="Alamat Tempat Bekerja..." />
+                            <textarea key={"almbk-"+selectedAlumni.alamat} className="w-full text-xs font-bold p-2 border rounded-lg h-12 resize-none outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.alamat} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'alamat_bekerja', e.target.value)} placeholder="Alamat Tempat Bekerja..." />
                             <SearchableInput label="Sosmed Instansi" field="instansi_sosmed" placeholder="Link Sosmed Kantor..." icon={<Building size={10}/>} searchContext={`${selectedAlumni.instansi} social media`} />
                         </div>
 
