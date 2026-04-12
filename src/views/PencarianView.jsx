@@ -460,10 +460,9 @@ export default function PencarianView({ setActiveTab }) {
 
                         {/* 2. KONTAK & DOMISILI */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><User size={12}/> Kontak & Domisili</label>
+                            <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><User size={12}/> Email & No.Hp</label>
                             <input key={"hp-"+selectedAlumni.no_hp} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.no_hp} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'no_hp', e.target.value)} placeholder="No Handphone / WA" />
                             <input key={"eml-"+selectedAlumni.email_alumni} type="email" className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.email_alumni} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'email_alumni', e.target.value)} placeholder="Email Aktif" />
-                            <textarea key={"alm-"+selectedAlumni.alamat} className="w-full text-xs font-bold p-2 border rounded-lg h-12 resize-none outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.alamat} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'alamat', e.target.value)} placeholder="Alamat Domisili..." />
                         </div>
 
                         {/* 3. SOSMED PRIBADI */}
