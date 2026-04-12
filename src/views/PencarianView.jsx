@@ -10,12 +10,12 @@ import { usePencarianController } from '../controllers/usePencarianController';
 export default function PencarianView({ setActiveTab }) {
   const { 
     queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, 
-    isSearching, internalResults, externalResults, alumniDB, executeSearch, simpanJejak, updateInformasiAlumni,
+    isSearching, internalResults, externalResults, alumniDB, executeSearch, simpanJejak, updateInformasiAlumni,verifyPDDiktiByRange,
     currentPage, setCurrentPage, totalData, searchHistory, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
     isImporting, importProgress, importStatus, handleImportExcel,exportProgressCount,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,
-    globalStats 
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,runAutoTrackRange,
+    globalStats, verifyWithPDDikti // Pastikan verifyWithPDDikti di-destructure di sini
   } = usePencarianController();
 
   const [selectedReportId, setSelectedReportId] = useState(null);
@@ -283,7 +283,7 @@ export default function PencarianView({ setActiveTab }) {
                     
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <button 
-                            onClick={runAutoTrackCurrentPage}
+                            onClick={verifyPDDiktiByRange}
                             disabled={isAutoTracking || isSearching || isExporting || isImporting}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all w-full sm:w-auto justify-center ${
                                 isAutoTracking 
@@ -292,7 +292,20 @@ export default function PencarianView({ setActiveTab }) {
                             }`}
                         >
                             {isAutoTracking ? <Activity size={12} className="animate-spin"/> : <Wand size={12} />}
-                            {isAutoTracking ? autoTrackStatus : 'Lacak Otomatis pada Halaman ini'}
+                            {isAutoTracking ? autoTrackStatus : 'Verifikasi PDDIKTI pada Halaman ini'}
+                        </button>
+                        
+                        <button 
+                            onClick={runAutoTrackRange}
+                            disabled={isAutoTracking || isSearching || isExporting || isImporting}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all w-full sm:w-auto justify-center ${
+                                isAutoTracking 
+                                ? 'bg-green-100 text-purple-600 cursor-wait' 
+                                : 'bg-gradient-to-r from-blue-600 to-blue-600 text-white hover:from-blue-700 hover:to-indigo-700 active:scale-95'
+                            }`}
+                        >
+                            {isAutoTracking ? <Activity size={12} className="animate-spin"/> : <Wand size={12} />}
+                            {isAutoTracking ? autoTrackStatus : 'Lacak pada halaman ini'}
                         </button>
 
                         <button 
@@ -308,10 +321,10 @@ export default function PencarianView({ setActiveTab }) {
                             {isAutoTracking ? autoTrackStatus : 'Lacak Otomatis Seluruh Data'}
                         </button>
 
-                        {/*<div className="relative w-full sm:w-48">
+                        <div className="relative w-full sm:w-48">
                             <Search size={14} className="absolute left-3 top-2 text-gray-400" />
                             <input type="text" placeholder="Cari di halaman ini" className="w-full pl-8 pr-4 py-1.5 text-xs font-bold border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} />
-                        </div>*/}
+                        </div>
                     </div>
                 </div>
 
@@ -345,7 +358,30 @@ export default function PencarianView({ setActiveTab }) {
                                             <div className="w-full bg-slate-200 rounded-full h-1"><div className="bg-emerald-500 h-1 rounded-full" style={{ width: `${item.confidence_score || 0}%` }}></div></div>
                                         </div>
                                     </td>
-                                    <td className="p-4 pr-6"><button onClick={() => setSelectedReportId(item.id)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-indigo-600 hover:bg-indigo-600 hover:text-white font-bold text-[10px] rounded-lg transition-all active:scale-95"><Edit2 size={12} /> VALIDASI</button></td>
+                                    <td className="p-4 pr-6 flex flex-col gap-1">
+                                      <button onClick={() => setSelectedReportId(item.id)} className="flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-100 text-indigo-600 hover:bg-indigo-600 hover:text-white font-bold text-[10px] rounded-lg transition-all active:scale-95 border border-slate-200"><Edit2 size={12} /> VALIDASI</button>
+                                      
+                                      {/* --- START: TOMBOL VERIFIKASI PDDIKTI BARU --- */}
+                                      <button 
+                                        onClick={() => {
+                                          if(item.pddikti_url) {
+                                            window.open(item.pddikti_url, '_blank');
+                                          } else {
+                                            verifyWithPDDikti(item.id, item.nim, item.nama);
+                                          }
+                                        }}
+                                        disabled={isAutoTracking}
+                                        className={`flex items-center justify-center gap-2 px-3 py-1.5 font-bold text-[10px] rounded-lg border transition-all active:scale-95 ${
+                                          item.pddikti_url 
+                                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white' 
+                                          : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-600 hover:text-white'
+                                        }`}
+                                      >
+                                        {item.pddikti_url ? <CheckCircle2 size={12}/> : isAutoTracking && autoTrackStatus.includes("PDDikti") ? <Loader2 size={12} className="animate-spin"/> : <CloudLightning size={12}/>}
+                                        {item.pddikti_url ? 'VERIFIED PDDIKTI' : 'VERIFIKASI KE PDDIKTI'}
+                                      </button>
+                                      {/* --- END --- */}
+                                    </td>
                                 </tr>
                             )})}
                         </tbody>
@@ -358,7 +394,7 @@ export default function PencarianView({ setActiveTab }) {
             </div>
         </div>
 
-        {/* PANEL KANAN: VALIDATOR DENGAN SEMUA FIELD (Linkedin, IG, FB, Tiktok, Email, HP, Karir, Alamat Kerja, Sosmed Kantor) */}
+        {/* PANEL KANAN: VALIDATOR */}
         <div className="w-full lg:w-1/3">
             {selectedAlumni ? (
                 <div key={selectedAlumni.id + selectedAlumni.last_tracked_at} className="bg-white rounded-3xl border border-gray-200 shadow-2xl overflow-hidden animate-in slide-in-from-right-8 duration-500 h-[750px] flex flex-col">
@@ -371,6 +407,52 @@ export default function PencarianView({ setActiveTab }) {
 
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/50">
                         
+                        {/* --- START: PENAMBAHAN INFO PDDIKTI DATABASE --- */}
+                        {selectedAlumni.pddikti_url && (
+  <div className="bg-indigo-900 p-4 rounded-2xl shadow-xl animate-in zoom-in-95 duration-300 border border-indigo-400/30">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2">
+        <CheckCircle2 size={16} className="text-emerald-400" />
+        <h5 className="text-[12px] font-black text-white uppercase tracking-widest">Terverifikasi Sistem</h5>
+      </div>
+      <ExternalLink size={14} className="text-indigo-300" />
+    </div>
+    
+    <p className="text-[12px] text-indigo-200 mb-3 italic">Data telah ditemukan dan diverifikasi melalui robot PDDikti.</p>
+
+    {/* --- MENAMPILKAN DATA DARI JSONB --- */}
+    {selectedAlumni.pddikti_data && (
+      <div className="bg-black/20 rounded-xl p-3 mb-4 space-y-2 border border-white/5 font-mono text-[11px]">
+        <div className="flex justify-between items-start gap-4">
+          <span className="text-indigo-300/70 uppercase">Mahasiswa</span>
+          <span className="text-white font-bold text-right uppercase">{selectedAlumni.pddikti_data.nama}</span>
+        </div>
+        <div className="flex justify-between border-t border-white/5 pt-2">
+          <span className="text-indigo-300/70 uppercase">NIM</span>
+          <span className="text-white font-bold">{selectedAlumni.pddikti_data.nim}</span>
+        </div>
+        <div className="flex justify-between border-t border-white/5 pt-2">
+          <span className="text-indigo-300/70 uppercase">PT</span>
+          <span className="text-white font-bold text-right uppercase">{selectedAlumni.pddikti_data.pt}</span>
+        </div>
+        <div className="flex justify-between border-t border-white/5 pt-2">
+          <span className="text-indigo-300/70 uppercase">Prodi</span>
+          <span className="text-white font-bold text-right uppercase">{selectedAlumni.pddikti_data.prodi}</span>
+        </div>
+      </div>
+    )}
+    {/* ---------------------------------- */}
+
+    <button 
+      onClick={() => window.open(selectedAlumni.pddikti_url, '_blank')}
+      className="w-full py-2.5 bg-white text-indigo-950 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-50 active:scale-95"
+    >
+      Buka Link PDDIKTI
+    </button>
+  </div>
+)}
+                        {/* --- END --- */}
+
                         {/* 1. AKADEMIK */}
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><BookOpen size={12}/> Akademik</label>
@@ -400,7 +482,7 @@ export default function PencarianView({ setActiveTab }) {
                         {/* 4. KARIR & INSTANSI */}
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><Briefcase size={12}/> Karir & Tempat Bekerja</label>
-                            <select key={"kat-"+selectedAlumni.jenis_instansi} className="w-full text-xs font-bold p-2 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.jenis_instansi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'kategori_kerja', e.target.value)}>
+                            <select key={"kat-"+selectedAlumni.jenis_instansi} className="w-full text-xs font-bold p-2 border rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.jenis_instansi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'jenis_instansi', e.target.value)}>
                                 <option value="">Pilih Kategori Kerja...</option>
                                 <option value="PNS">PNS / ASN</option>
                                 <option value="Swasta">Swasta</option>
