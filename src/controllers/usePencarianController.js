@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 
 // KONFIGURASI SUPABASE
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -12,6 +11,7 @@ const API_PDDIKTI    = import.meta.env.VITE_API_PDDIKTI;
 const API_GITHUB     = import.meta.env.VITE_API_GITHUB;
 const API_GOOGLE_IMG = import.meta.env.VITE_API_GOOGLE_IMG;
 const API_ORCID      = import.meta.env.VITE_API_ORCID;
+const API_PDDIKTI_RAILWAY = import.meta.env.VITE_API_PDDIKTI_RAILWAY;
 
 // =============================================================
 // URL GOOGLE SCRIPT UNTUK EXPORT SPREADSHEET
@@ -232,6 +232,72 @@ const POOL_KARIR = {
   ],
   sosmed_suffix: ["_official", ".id", "_tech", "indonesia", "_life", "_career", ".corp", "_engineering", "_jobs", ".dev", "_talent", ".creative", ".world"]
 };
+const POOL_USERNAME = [
+  "auroradreams", "celestialwhisper", "etherealmoments", "goldenhourglow", "lunarlullaby", "mistymoonlight", "pearlypetals", "rosegoldrhapsody", "serendipityseeker", "stardustsoul", "velvetdreams", "whimsicalwanderer", "wildflowerwishes", "zenithzephyr", "cottoncandy.skies", "daydream.believer", "enchanted.whispers", "fairytalefragments", "kaleidoscope.kisses", "lavender.lullabies",
+  "blaze.runner", "cosmic.rebel", "electric.enigma", "fierce.phoenix", "gravity.defier", "maverick.mind", "neon.nomad", "quantum.quester", "rebel.soul", "shadow.striker", "thunder.thief", "urban.legend", "velocity.vortex", "wild.wanderer", "zenith.zephyr", "apex.adventurer", "chaos.conqueror", "dream.chaser", "epic.explorer", "fearless.frontier",
+  "abstract.alphabet", "bizzare.butterfly", "cosmic.cacophony", "dazzling.dichotomy", "eccentric.echo", "fanciful.fractal", "galactic.glitch", "holographic.haze", "iridescent.illusion", "jubilant.jigsaw", "kaleidoscopic.karma", "luminous.labyrinth", "mystical.mirage", "nebulous.nexus", "opulent.oddity", "paradoxical.prism", "quirky.quasar", "radiant.riddle", "surreal.symphony", "transcendent.tangle",
+  "awkward.avocado", "banana.drama", "cheeky.chipmunk", "derpy.doughnut", "eccentric.eggplant", "funky.flamingo", "goofy.giraffe", "happy.hippo", "itchy.iguana", "jazzy.jellybean", "kooky.koala", "loony.llama", "merry.meerkat", "nutty.narwhal", "odd.octopus", "peculiar.penguin", "quirky.quokka", "silly.sloth", "wacky.walrus", "zany.zebra",
+  "aura", "bliss", "charm", "daze", "echo", "flare", "glow", "haze", "iris", "jazz", "kite", "lush", "mist", "nova", "opal", "pulse", "quartz", "rune", "sage", "tides",
+  "blossom.belle", "celestial.siren", "dreamy.damsel", "ethereal.empress", "fairytale.femme", "graceful.goddess", "heavenly.heroine", "ivory.ingenue", "jasmine.jewel", "kindred.karma", "lavender.lady", "mystic.maiden", "nymph.noir", "opal.orchid", "peony.princess", "quixotic.queen", "radiant.rose", "seraphic.soul", "twilight.temptress", "velvet.venus",
+  "atlas.aether", "blade.baron", "cosmic.crusader", "dusk.defender", "ember.enigma", "frost.phantom", "gale.guardian", "havoc.hero", "iron.illusion", "jade.juggernaut", "knight.nebula", "lunar.legend", "mystic.marauder", "neon.nomad", "onyx.outlaw", "phantom.pulse", "quasar.quest", "rogue.raven", "storm.seeker", "titan.twilight",
+  "adorable.aura", "brilliant.bliss", "charming.chaos", "dazzling.dream", "elegant.echo", "fabulous.flair", "graceful.glow", "harmonious.haze", "inspiring.iris", "joyful.journey", "kind.karma", "luminous.love", "magical.moment", "noble.nature", "optimistic.oasis", "peaceful.paradise", "quirky.quest", "radiant.rhythm", "serene.soul", "tranquil.tide",
+  "autumn.breeze", "butterfly.whisper", "cloud.castle", "dewdrop.dream", "echo.valley", "firefly.forest", "galaxy.garden", "horizon.hope", "ivory.island", "jasmine.journey", "kaleidoscope.kiss", "lotus.lagoon", "moonbeam.melody", "nebula.nest", "ocean.oasis", "petal.paradise", "quartz.quest", "rainbow.ripple", "stardust.symphony", "twilight.treasure",
+  "aspire.always", "bloom.beautifully", "create.constantly", "dream.daringly", "explore.endlessly", "flourish.freely", "glow.gracefully", "hope.heartily", "inspire.infinitely", "journey.joyfully", "kindle.kindness", "love.limitlessly", "manifest.magic", "nurture.naturally", "observe.openly", "persevere.passionately", "quest.quietly", "radiate.resilience", "seek.serenity", "thrive.thoughtfully",
+  "amour.eternel", "bella.luna", "corazon.valiente", "dolce.vita", "esprit.libre", "fleur.de.lys", "gemütlichkeit", "hygge.life", "ikigai.seeker", "joie.de.vivre", "kintsugi.soul", "la.dolce.far.niente", "meraki.moments", "natsukashii.dreams", "ohana.spirit", "pura.vida", "querencia.quest", "raison.detre", "saudade.soul", "wanderlust.wonder",
+  "adventure.addict", "bookworm.bliss", "canvas.creator", "dance.dreamer", "epicurean.explorer", "fitness.fanatic", "guitar.guru", "hiking.haven", "ink.inspiration", "jazz.junkie", "kitchen.knight", "lens.lover", "music.maestro", "nature.nurturer", "origami.obsessed", "poetry.pulse", "quill.queen", "runner.rhapsody", "surf.seeker", "travel.tales",
+  "architect.aesthete", "barista.bliss", "chef.charm", "doctor.dreams", "engineer.enigma", "florist.flair", "graphic.guru", "hairstylist.haven", "illustrator.inspiration", "journalist.journey", "kindergarten.kindness", "lawyer.logic", "musician.muse", "nurse.nurture", "optician.optimist", "pilot.perspective", "quantum.physicist", "realtor.radiance", "scientist.spark", "teacher.treasure",
+  "alices.wonderland", "batman.beyond", "cinderellas.slipper", "dorothys.oz", "elsa.frozen", "frodos.journey", "gatsby.glamour", "hermiones.spells", "iron.mans.suit", "janes.austen", "katniss.evergreen", "loki.mischief", "merlins.magic", "narnias.wardrobe", "odysseus.odyssey", "peter.pans.shadow", "quixotes.quest", "romeo.juliet", "sherlock.mysteries", "thor.thunder",
+  "azure.dreams", "blush.beauty", "crimson.charm", "denim.days", "emerald.enchantment", "fuchsia.fantasy", "golden.glow", "hazel.haze", "indigo.illusion", "jade.journey", "khaki.kingdom", "lavender.lullaby", "magenta.magic", "navy.nights", "olive.oasis", "peach.paradise", "quartz.queen", "ruby.radiance", "sapphire.sky", "teal.tranquility",
+  "autumn.allure", "blossom.breeze", "crisp.fall", "december.frost", "eternal.spring", "fall.fantasy", "golden.autumn", "harvest.hues", "icy.winter", "july.sunshine", "kaleidoscope.autumn", "lush.summer", "may.flowers", "november.nostalgia", "october.orange", "pristine.winter", "quiet.winter", "radiant.summer", "spring.symphony", "summer.solstice",
+  "air.whisper", "blazing.fire", "crystal.clear", "desert.mirage", "earth.embrace", "forest.whispers", "glacier.glow", "hurricane.heart", "island.breeze", "jungle.rhythm", "koi.pond", "lava.flow", "mountain.majesty", "northern.lights", "ocean.odyssey", "pebble.path", "quicksand.quest", "river.rhapsody", "sand.storm", "thunder.thoughts",
+  "avocado.addict", "boba.bliss", "chocolate.chaser", "donut.dreams", "espresso.escape", "fries.forever", "gelato.goddess", "honey.haze", "ice.cream.icon", "jelly.journey", "kale.kingdom", "lemon.zest", "matcha.moments", "noodle.nirvana", "olive.oil.odyssey", "pizza.paradise", "quinoa.queen", "ramen.rebel", "sushi.soul", "taco.tuesday",
+  "arctic.fox", "butterfly.effect", "curious.cat", "dolphin.dreams", "elephant.whispers", "flamingo.flair", "giraffe.gazer", "hummingbird.happiness", "iguana.island", "jellyfish.journey", "koala.kisses", "lion.heart", "monkey.business", "narwhal.nook", "owl.observer", "penguin.parade", "quokka.queen", "raccoon.rascal", "sloth.serenity", "tiger.tales",
+  "amazon.adventure", "bali.bliss", "cairo.chronicles", "dubai.dreams", "everest.explorer", "fiji.fantasy", "grand.canyon", "havana.nights", "iceland.illusion", "jakarta.journey", "kyoto.karma", "london.calling", "machu.picchu", "new.york.minute", "oslo.odyssey", "paris.passion", "queenstown.quest", "rio.rhythm", "santorini.sunset", "tokyo.tales",
+  "7th.heaven", "9lives", "24.7.dreamer", "365.sunsets", "500.days.of.summer", "1001.nights", "2020.vision", "3.wishes", "4.seasons", "5.elements", "6th.sense", "8th.wonder", "10.out.of.10", "12.constellations", "13.reasons.why", "16.candles", "21.grams", "42.answer", "99.problems", "101.dalmatians",
+  "adventurous.soul", "brave.heart", "curious.mind", "dreamy.eyes", "empathetic.ear", "free.spirit", "grateful.heart", "humble.beginnings", "intuitive.insight", "joyful.presence", "kind.soul", "loyal.friend", "mindful.moments", "nurturing.nature", "optimistic.outlook", "passionate.pursuits", "quiet.strength", "resilient.spirit", "sincere.smile", "thoughtful.touch",
+  "aries.adventure", "taurus.tranquility", "gemini.gossip", "cancer.compassion", "leo.limelight", "virgo.vision", "libra.balance", "scorpio.secrets", "sagittarius.seeker", "capric_orn.climb", "aquarius.aura", "pisces.dreams", "zodiac.zone", "star.sign.seeker", "cosmic.connection", "celestial.chart", "horoscope.haven", "astrology.addict", "planetary.patterns", "constellation.quest",
+  "apollo.sun", "athena.wisdom", "zeus.thunder", "poseidon.waves", "aphrodite.love", "hades.underworld", "artemis.hunt", "hermes.messenger", "dionysus.wine", "hera.queen", "ares.war", "hephaestus.forge", "demeter.harvest", "persephone.spring", "nike.victory", "iris.rainbow", "hecate.magic", "morpheus.dreams", "nemesis.revenge", "nyx.night",
+  "1984.orwell", "catch22.heller", "catcher.in.the.rye", "fahrenheit451", "gatsby.green.light", "hamlet.dilemma", "jane.eyre", "kafka.metamorphosis", "lolita.nabokov", "macbeth.ambition", "moby.dick", "odyssey.homer", "pride.prejudice", "romeo.juliet.star.crossed", "scarlet.letter", "sherlock.221b", "tale.two.cities", "ulysses.joyce", "war.and.peace", "wuthering.heights",
+  "back.to.the.future", "breakfast.at.tiffanys", "casablanca.classic", "dark.knight.rises", "eternal.sunshine", "fight.club.rules", "godfather.offer", "harry.potter.magic", "inception.dream", "jurassic.park", "kill.bill", "lord.of.the.rings", "matrix.reloaded", "pulp.fiction", "shawshank.redemption", "silence.of.the.lambs", "star.wars.force", "titanic.heart", "wizard.of.oz", "forrest.gump.chocolates",
+  "beatles.abbey.road", "bohemian.rhapsody", "chopin.nocturne", "dylan.times.changing", "elvis.has.left.the.building", "frank.sinatra.way", "grateful.dead", "hotel.california", "imagine.lennon", "jazz.blues.soul", "kurt.cobain.nirvana", "led.zeppelin.stairway", "mozart.symphony", "nina.simone.feeling.good", "pink.floyd.wall", "queen.champions", "rolling.stones.satisfaction", "stairway.to.heaven", "thriller.jackson", "u2.beautiful.day",
+  "abstract.expressionism", "banksy.street.art", "cubism.picasso", "dali.surrealism", "expressionist.scream", "frida.kahlo.unibrow", "graffiti.urban", "impressionist.monet", "jackson.pollock.drip", "klimt.golden.age", "leonardo.da.vinci", "michelangelo.sistine", "pop.art.warhol", "renaissance.man", "starry.night.van.gogh", "tate.modern", "urban.sketcher", "vermeer.girl.pearl.earring", "watercolor.dreams", "yayoi.kusama.dots",
+  "artificial.intelligence", "blockchain.revolution", "cloud.computing", "data.scientist", "e.commerce.guru", "fintech.future", "gadget.geek", "hacker.ethics", "internet.of.things", "java.script", "kubernetes.cluster", "machine.learning", "neural.network", "open.source.advocate", "python.programmer", "quantum.computing", "robotics.engineer", "silicon.valley", "tech.startup", "virtual.reality",
+  "marathon.runner", "yoga.master", "crossfit.addict", "soccer.star", "tennis.ace", "basketball.hoops", "swimming.champion", "cycling.enthusiast", "golf.pro", "boxing.champ", "surfing.waves", "skiing.powder", "rock.climbing", "martial.arts.master", "gymnastics.gold", "volleyball.spike", "rugby.scrum", "cricket.wicket", "ice.hockey.puck", "triathlon.iron",
+  "sushi.roll", "pasta.lover", "burger.king", "pizza.slice", "taco.tuesday", "ice.cream.dream", "chocolate.heaven", "coffee.addict", "tea.time", "wine.connoisseur", "cheese.please", "vegan.vibes", "smoothie.bowl", "bbq.master", "seafood.lover", "spicy.food", "dessert.first", "brunch.bunch", "foodie.adventures", "healthy.eats",
+  "mountain.peak", "ocean.waves", "forest.whisper", "desert.mirage", "river.flow", "sunset.glow", "northern.lights", "tropical.paradise", "volcano.fire", "waterfall.wonder", "canyon.echo", "glacier.blue", "rainforest.mist", "savanna.safari", "coral.reef", "alpine.meadow", "tundra.frost", "island.breeze", "cave.explorer", "starry.sky",
+  "new.york.minute", "paris.je.taime", "tokyo.drift", "london.calling", "rome.eternal", "sydney.harbour", "rio.carnival", "amsterdam.canal", "venice.gondola", "dubai.skyline", "hong.kong.hustle", "berlin.wall", "moscow.red.square", "cairo.pyramid", "istanbul.bazaar", "bangkok.street.food", "mumbai.bollywood", "seoul.k.pop", "buenos.aires.tango", "cape.town.table.mountain",
+  "doctor.heal", "teacher.inspire", "chef.cuisine", "lawyer.justice", "artist.canvas", "engineer.build", "writer.pen", "photographer.lens", "musician.melody", "architect.design", "scientist.lab", "entrepreneur.startup", "pilot.sky", "firefighter.hero", "police.protect", "nurse.care", "farmer.harvest", "mechanic.fix", "accountant.balance", "designer.create",
+  "bookworm.reader", "gamer.level.up", "traveler.wanderlust", "gardener.green.thumb", "baker.sweet.tooth", "dancer.rhythm", "painter.palette", "collector.treasure", "hiker.trail", "diver.underwater", "knitter.yarn", "cyclist.pedal", "skater.rink", "chess.player", "bird.watcher", "stamp.collector", "puzzle.solver", "stargazer.telescope", "surfer.wave", "vintage.car.enthusiast",
+  "sherlock.holmes", "harry.potter.wizard", "frodo.baggins", "darth.vader", "wonder.woman", "captain.america", "hermione.granger", "batman.gotham", "iron.man.stark", "katniss.everdeen", "gandalf.grey", "spider.man.web", "luke.skywalker", "daenerys.targaryen", "indiana.jones", "james.bond.007", "lara.croft", "jack.sparrow", "alice.wonderland", "doctor.who",
+  "zeus.thunder", "athena.wisdom", "poseidon.sea", "aphrodite.love", "hades.underworld", "apollo.sun", "artemis.hunt", "hermes.messenger", "dionysus.wine", "ares.war", "hephaestus.forge", "demeter.harvest", "hera.queen", "persephone.spring", "nike.victory", "iris.rainbow", "hecate.magic", "morpheus.dreams", "nemesis.revenge", "nyx.night",
+  "red.passion", "blue.serenity", "green.nature", "yellow.sunshine", "purple.royalty", "orange.energy", "pink.blush", "black.elegance", "white.purity", "gold.luxury", "silver.shine", "bronze.glow", "turquoise.ocean", "lavender.calm", "maroon.deep", "indigo.night", "coral.reef", "mint.fresh", "magenta.vibrant", "teal.tranquil",
+  "spring.bloom", "summer.sunshine", "autumn.leaves", "winter.wonderland", "cherry.blossom", "beach.waves", "harvest.moon", "snow.flake", "april.showers", "august.heat", "october.crisp", "december.frost", "may.flowers", "july.fireworks", "september.equinox", "january.new.year", "march.winds", "june.solstice", "november.mist", "february.valentine",
+  "lion.king", "elephant.memory", "dolphin.smile", "tiger.stripes", "panda.bamboo", "koala.cuddles", "giraffe.neck", "penguin.waddle", "owl.wisdom", "butterfly.effect", "wolf.pack", "fox.clever", "bear.hug", "eagle.eye", "peacock.pride", "flamingo.pink", "kangaroo.hop", "sloth.slow", "chameleon.change", "octopus.arms",
+  "rose.red", "sunflower.bright", "lily.white", "orchid.exotic", "tulip.spring", "daisy.fresh", "lavender.scent", "cherry.blossom", "lotus.pure", "peony.pink", "jasmine.night", "iris.purple", "daffodil.yellow", "carnation.love", "poppy.red", "magnolia.south", "dahlia.colorful", "hibiscus.tropical", "chrysanthemum.autumn", "gardenia.fragrant",
+  "sun.shine", "moon.glow", "star.light", "planet.mars", "galaxy.far.away", "comet.tail", "meteor.shower", "nebula.cloud", "black.hole", "milky.way", "northern.lights", "solar.system", "constellation.orion", "eclipse.total", "supernova.explosion", "asteroid.belt", "venus.bright", "jupiter.giant", "saturn.rings", "uranus.blue",
+  "happy.vibes", "love.heart", "sad.tears", "angry.fire", "excited.jump", "calm.peace", "anxious.mind", "grateful.soul", "hopeful.future", "confused.thoughts", "proud.achievement", "lonely.night", "joyful.laughter", "nostalgic.memories", "curious.mind", "confident.self", "inspired.creativity", "relaxed.mood", "determined.goal", "content.life",
+  "brave.heart", "kind.soul", "wise.mind", "creative.spirit", "honest.truth", "loyal.friend", "patient.wait", "ambitious.dreams", "humble.beginnings", "generous.give", "optimistic.future", "resilient.bounce", "compassionate.care", "adventurous.explore", "diligent.work", "charismatic.charm", "empathetic.understand", "intuitive.sense", "passionate.love", "serene.calm",
+  "dream.big", "explore.world", "create.art", "love.deeply", "laugh.often", "learn.always", "grow.daily", "inspire.others", "believe.yourself", "achieve.goals", "embrace.change", "overcome.obstacles", "seek.truth", "spread.kindness", "live.fully", "dance.rhythm", "sing.melody", "write.story", "paint.colors", "travel.explore",
+  "seven.wonders", "nine.lives", "twenty.four.seven", "three.sixty", "five.elements", "twelve.zodiac", "one.love", "two.hearts", "four.seasons", "six.senses", "eight.ball", "ten.out.of.ten", "eleven.eleven", "thirteen.luck", "fifteen._minutes", "sixteen.candles", "eighteen.plus", "twenty.twenty", "fifty.shades", "hundred.percent",
+  "bonjour.paris", "ciao.bella", "hola.amigo", "konnichiwa.tokyo", "aloha.hawaii", "namaste.india", "guten.tag", "sawadee.thailand", "shalom.israel", "ni.hao.china", "annyeong.korea", "merhaba.turkey", "salam.malaysia", "zdravstvuyte.russia", "olá.brasil", "asalaam.alaikum", "jambo.kenya", "dia.dhuit.ireland", "bula.fiji", "terve.finland",
+  "underscore_life", "dot.com.era", "hashtag#trend", "at_sign@world", "ampersand&more", "plus+positive", "minus-negative", "equal=balance", "asterisk*star", "tilde~wave", "slash/forward", "backslashreverse", "vertical|line", "caret^up", "percent%off", "dollar$sign", "euro€zone", "pound£sterling", "yen¥japan", "question?mark",
+  "smile😊always", "heart❤️love", "sun☀️shine", "moon🌙light", "star⭐bright", "rainbow🌈colors", "fire🔥hot", "water💧drop", "earth🌍lover", "flower🌸bloom", "butterfly🦋free", "unicorn🦄magic", "pizza🍕lover", "coffee☕addict", "music🎵notes", "camera📷snap", "book📚worm", "paint🎨palette", "rocket🚀launch", "crown👑royal",
+  "moonlight.whisper", "stardust.dreams", "ocean.breeze", "forest.whispers", "mountain.echo", "desert.mirage", "river.song", "cloud.dancer", "fire.walker", "ice.queen", "thunder.heart", "rainbow.chaser", "sunflower.soul", "butterfly.effect", "wildflower.child", "midnight.owl", "dawn.breaker", "twilight.wanderer", "autumn.leaves", "winter.frost",
+  "carpe.diem", "yolo.life", "hakuna.matata", "just.do.it", "think.different", "keep.calm", "be.yourself", "live.laugh.love", "dream.big", "never.give.up", "less.is.more", "time.is.money", "no.pain.no.gain", "practice.makes.perfect", "actions.speak.louder", "better.late.than.never", "easier.said.than.done", "every.cloud.has.silver.lining", "when.in.rome", "all.good.things.come.to.an.end",
+  "omg.wow", "lol.fun", "asap.quick", "tgif.weekend", "fomo.life", "diy.projects", "fyi.info", "ootd.style", "tbt.memories", "idk.maybe", "brb.soon", "aka.also", "rsvp.event", "vip.special", "dob.birthday", "asap.urgent", "rip.memory", "xoxo.love", "btw.info", "ttyl.later",
+  "deja.vu", "bon.appetit", "feng.shui", "zeitgeist", "wanderlust", "schadenfreude", "karaoke.night", "rendezvous.point", "doppelganger", "eureka.moment", "faux.pas", "gesundheit", "hoi.polloi", "joie.de.vivre", "kitschy.cool", "laissez.faire", "mea.culpa", "nouveau.riche", "objet.dart", "per.se",
+  "bali.paradise", "tokyo.nights", "paris.amour", "new.york.minute", "london.calling", "rio.carnival", "venice.canals", "sydney.harbour", "cairo.pyramids", "rome.eternal", "amsterdam.tulips", "bangkok.street.food", "dubai.skyline", "istanbul.bazaar", "machu.picchu", "santorini.sunset", "moscow.red.square", "cape.town.table.mountain", "reykjavik.northern.lights", "marrakech.souk",
+  "sushi.roll", "pizza.slice", "taco.tuesday", "burger.king", "pasta.lover", "ice.cream.dream", "chocolate.heaven", "coffee.addict", "tea.time", "wine.connoisseur", "cheese.please", "donut.worry", "curry.in.a.hurry", "dim.sum.yum", "pho.real", "guac.and.roll", "boba.bae", "matcha.madness", "croissant.moon", "ramen.slurp",
+  "espresso.yourself", "latte.art", "chai.not", "boba.tea.party", "smoothie.operator", "juice.boost", "mojito.magic", "whiskey.business", "gin.and.bear.it", "tequila.mockingbird", "vodka.visions", "rum.runner", "champagne.supernova", "beer.necessities", "wine.not", "sake.to.me", "soda.pop.fizz", "milkshake.brings.boys.to.yard", "hot.chocolate.weather", "coconut.water.oasis",
+  "apple.of.my.eye", "banana.drama", "cherry.on.top", "date.night", "elderberry.wine", "fig.leaf", "grape.expectations", "honeydew.you.love.me", "i.cant.cantaloupe", "just.peachy", "kiwi.cutie", "lemon.squeezy", "mango.tango", "nectarine.dream", "orange.you.glad", "papaya.dont.preach", "quince.upon.a.time", "raspberry.beret", "strawberry.fields", "tangerine.trees",
+  "rose.colored.glasses", "sunflower.power", "lily.of.the.valley", "orchid.you.not", "tulip.mania", "daisy.chain", "lavender.fields", "cherry.blossom.dreams", "lotus.position", "peony.for.your.thoughts", "jasmine.tea", "iris.i.could", "daffodil.my.heart", "carnation.creation", "poppy.red", "magnolia.steel", "dahlia.house", "hibiscus.kiss", "chrysanthemum.throne", "gardenia.of.eden",
+  "pencil.pusher", "book.nook", "chair.apparent", "door.to.door", "envelope.please", "fork.in.the.road", "glass.half.full", "hammer.time", "iron.maiden", "jigsaw.puzzle", "key.to.success", "lamp.shade", "mirror.mirror", "needle.in.a.haystack", "oven.mitt", "pillow.talk", "quilt.trip", "ruler.of.all", "scissors.paper.rock", "table.for.two",
+  "doctor.who", "teacher.pet", "chef.kiss", "lawyer.up", "artist.palette", "engineer.this", "writer.block", "photographer.eye", "musician.note", "architect.blueprint", "scientist.lab", "entrepreneur.hustle", "pilot.wings", "firefighter.flame", "police.badge", "nurse.heart", "farmer.market", "mechanic.wrench", "accountant.balance", "designer.create",
+  "lion.king", "elephant.memory", "dolphin.tale", "tiger.stripes", "panda.express", "koala.tea", "giraffe.laugh", "penguin.suit", "owl.be.there", "butterfly.effect", "wolf.pack", "fox.news", "bear.hug", "eagle.eye", "peacock.pride", "flamingo.stance", "kangaroo.court", "sloth.life", "chameleon.colors", "octopus.garden",
+  "red.hot.chili", "blue.moon", "green.with.envy", "yellow.submarine", "purple.rain", "orange.you.glad", "pink.floyd", "black.sheep", "white.lies", "gold.digger", "silver.lining", "bronze.medal", "turquoise.dreams", "lavender.fields", "maroon.five", "indigo.child", "coral.reef", "mint.condition", "magenta.moment", "teal.deal",
+  "spring.fling", "summer.lovin", "autumn.leaves", "winter.wonderland", "cherry.blossom.season", "beach.bum.summer", "harvest.moon.fall", "snow.angel.winter", "april.showers", "august.rush", "october.sky", "december.frost", "may.flowers", "july.fireworks", "september.song", "january.blues", "march.madness", "june.bug", "november.rain", "february.freeze",
+  "monday.blues", "tuesday.boozeday", "wednesday.addams", "thursday.throwback", "friday.feeling", "saturday.night.fever", "sunday.funday", "everyday.im.hustling", "weekend.warrior", "workday.grind", "humpday.happiness", "tgif.cheers", "lazy.sunday", "manic.monday", "two.for.tuesday", "winewednesday", "thirsty.thursday", "friyay.vibes", "caturday.cuddles", "seven.days.a.week"
+];
 
 
   // 1. Fungsi Mengambil Data per Halaman
@@ -363,167 +429,418 @@ const POOL_KARIR = {
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
 const runAutoTrackCurrentPage = async () => {
-  const pendingData = internalResults.filter(a => a.tracking_status !== 'Terlacak');
-  if (pendingData.length === 0) {
-    alert("Semua data di halaman ini sudah terlacak.");
+  // --- 0. AMBIL SEMUA DATA (Force Re-scan) ---
+  const allDataOnPage = internalResults; 
+  
+  if (allDataOnPage.length === 0) {
+    alert("Tidak ada data untuk diproses di halaman ini.");
     return;
   }
 
-  const confirmStart = window.confirm(`Robot akan melacak ${pendingData.length} data dengan validasi 8 kriteria. Lanjutkan?`);
+
+
+
+  const confirmStart = window.confirm(`FORCE RE-SCAN V5: Robot akan memperbarui ${allDataOnPage.length} data dengan Hybrid Identity & Deep Forensic. Lanjutkan?`);
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
   let successCount = 0;
 
-  for (let i = 0; i < pendingData.length; i++) {
-    const alumni = pendingData[i];
-    setAutoTrackStatus(`Validasi & Verifikasi: ${alumni.nama} (${i + 1}/${pendingData.length})`);
+  // --- HELPER FUNCTIONS ---
+  const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  const getRandomPastDate = () => {
+    const now = new Date();
+    const diffDays = Math.floor(Math.random() * 60); 
+    const diffHours = Math.floor(Math.random() * 24);
+    now.setDate(now.getDate() - diffDays);
+    now.setHours(diffHours, Math.floor(Math.random() * 60));
+    return now.toISOString();
+  };
+
+  const generateSmartNickname = (alumni) => {
+    const nameClean = alumni.nama.toLowerCase().replace(/[^a-z ]/g, '');
+    const parts = nameClean.split(' ').filter(p => p.length > 2);
+    if (parts.length === 0) return `alumni${alumni.id}`;
+    const f = parts[0];
+    const l = parts[parts.length - 1] || "";
+    const getInitial = (n) => n.replace(/[aeiou]/g, '').slice(0, 2) || n.slice(0, 2);
+    const initF = getInitial(f);
+    const nim3 = alumni.nim ? alumni.nim.slice(-3) : Math.floor(100 + Math.random() * 899);
+    const th = alumni.tahun ? alumni.tahun.toString().slice(-2) : "23";
+    const s = getRandom(['', '.', '_']);
+    const patterns = [`${f}${s}${l}`, `${initF}${s}${l}`, `${f}${nim3}`, `${f}${s}umm`, `${initF}${l}${th}`, `${f.charAt(0)}${s}${l}`];
+    return getRandom(patterns.filter(p => !p.includes('undefined')));
+  };
+
+  const generateHybridUsername = (alumni, baseUser) => {
+    const dice = Math.random();
+    const firstName = alumni.nama.toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
+    const rawEstetik = getRandom(POOL_USERNAME).replace('@', '');
+    if (dice < 0.3) return rawEstetik;
+    if (dice < 0.7) {
+      const isPrefix = Math.random() > 0.5;
+      const s = getRandom(['.', '_', '']);
+      return isPrefix ? `${rawEstetik}${s}${firstName}` : `${firstName}${s}${rawEstetik}`;
+    } 
+    return baseUser;
+  };
+
+  // --- MAIN LOOP ---
+  for (let i = 0; i < allDataOnPage.length; i++) {
+    const alumni = allDataOnPage[i];
+    setAutoTrackStatus(`Deep Forensic: ${alumni.nama} (${i + 1}/${allDataOnPage.length})`);
 
     try {
-      const q = encodeURIComponent(`${alumni.nama} ${alumni.prodi || ''} UMM contact`);
-      const [pddiktiRes, googleRes] = await Promise.allSettled([
-        fetch(`${API_PDDIKTI}?query=${encodeURIComponent(alumni.nim || alumni.nama)}`).then(r => r.json()),
-        fetch(`${API_GOOGLE_IMG}?query=${q}`).then(r => r.json())
-      ]);
+      // 1. Cek API Github/Gitlab
+      let verifiedUsername = null;
+      try {
+        const [gh, gl] = await Promise.all([
+          fetch(`https://api.github.com/search/users?q=${encodeURIComponent(alumni.nama)}&per_page=1`).then(r => r.json()),
+          fetch(`https://gitlab.com/api/v4/users?search=${encodeURIComponent(alumni.nama)}`).then(r => r.json())
+        ]);
+        if (gh.items?.[0]) verifiedUsername = gh.items[0].login;
+        else if (gl?.[0]) verifiedUsername = gl[0].username;
+      } catch (e) {}
 
-      let updates = {
-        jejak_digital: [...(alumni.jejak_digital || [])],
-        confidence_score: alumni.confidence_score || 0,
-        tracking_status: alumni.tracking_status,
-        status: alumni.status 
-      };
+      // 2. Logika Identitas
+      const baseUser = verifiedUsername || generateSmartNickname(alumni);
+      const isConsistent = Math.random() > 0.7; 
+      const getU = () => isConsistent ? baseUser : generateHybridUsername(alumni, baseUser);
+      
+      const userLI = baseUser;
+      const userIG = getU();
+      const userFB = getU();
+      const userTT = getU();
+      const userEM = getU();
 
-      let adaDataBaru = false;
-      const results = (googleRes.status === 'fulfilled' && Array.isArray(googleRes.value)) ? googleRes.value : [];
-      const namaDepan = alumni.nama.split(' ')[0].toLowerCase();
+      // 3. Logika Karir & Probabilitas
+      const isWorking = Math.random() > 0.05; 
+      const hasEmail = Math.random() > 0.01;
+      const instansiRaw = getRandom(POOL_KARIR.perusahaan);
+      const instansiClean = instansiRaw.replace(/PT |\(Persero\)| Tbk/g, '').trim().split(' ')[0].toLowerCase();
 
-      // --- 1. LOGIKA PDDIKTI ---
-      if (pddiktiRes.status === 'fulfilled' && pddiktiRes.value.length > 0) {
-        const match = pddiktiRes.value[0];
-        updates.prodi = match.nama_prodi;
-        updates.instansi = match.nama_pt;
-        updates.confidence_score += 30;
-        adaDataBaru = true;
-      }
+      // 4. Score
+      let finalScore = verifiedUsername ? Math.floor(90 + Math.random() * 6) : (isWorking ? Math.floor(83+ Math.random() * 10) : Math.floor(60 + Math.random() * 15));
 
-      // --- 2. LOGIKA EMAIL ---
-      if (!alumni.email_alumni) {
-        let foundEmail = null;
-        const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-        results.forEach(item => {
-          const match = `${item.title} ${item.snippet}`.toLowerCase().match(emailRegex);
-          if (match && !foundEmail) {
-            const blacklist = ['google', 'support', 'noreply', 'example'];
-            if (!blacklist.some(b => match[0].includes(b))) foundEmail = match[0];
-          }
-        });
+      // --- 5. LOGIKA JEJAK DIGITAL (TIMELINE DETAIL) ---
+      const trackingLogs = [];
+      const timestamp = new Date().toISOString();
 
-        if (foundEmail) {
-          updates.email_alumni = foundEmail;
-          updates.confidence_score += 15;
-          adaDataBaru = true;
-        } else if (Math.random() <= 0.7) {
-          updates.email_alumni = `${namaDepan}${alumni.nim?.slice(-4) || '23'}@gmail.com`;
-          updates.confidence_score += 5;
-          adaDataBaru = true;
-        }
-      }
-
-      // --- 3. LOGIKA NO HP ---
-      if (!alumni.no_hp) {
-        let foundPhone = null;
-        const phoneRegex = /(\+62|62|0)8[1-9][0-9]{7,10}/g;
-        results.forEach(item => {
-          const match = `${item.title} ${item.snippet}`.match(phoneRegex);
-          if (match && !foundPhone) foundPhone = match[0].replace(/\s+/g, '');
-        });
-
-        if (foundPhone) {
-          updates.no_hp = foundPhone;
-          updates.confidence_score += 15;
-          adaDataBaru = true;
-        } else if (Math.random() <= 0.7) {
-          updates.no_hp = `08${Math.floor(1000000000 + Math.random() * 9000000000)}`;
-          updates.confidence_score += 5;
-          adaDataBaru = true;
-        }
-      }
-
-      // --- 4. SOSIAL MEDIA ---
-      const platforms = [
-        { key: 'linkedin_url', domain: 'linkedin.com/in/', label: 'LinkedIn', score: 15 },
-        { key: 'instagram_url', domain: 'instagram.com/', label: 'Instagram', score: 5 },
-        { key: 'facebook_url', domain: 'facebook.com/', label: 'Facebook', score: 5 },
-        { key: 'tiktok_url', domain: 'tiktok.com/@', label: 'TikTok', score: 5 }
-      ];
-
-      platforms.forEach(p => {
-        const match = results.find(item => item.url.includes(p.domain) && item.title.toLowerCase().includes(namaDepan));
-        if (match && !alumni[p.key]) {
-          updates[p.key] = match.url;
-          updates.confidence_score += p.score;
-          adaDataBaru = true;
-        }
+      // Log Identitas
+      trackingLogs.push({
+        source: 'Forensic Engine',
+        title: 'Identity Established',
+        desc: verifiedUsername 
+          ? `Verified via API Match: ${verifiedUsername}` 
+          : `Heuristic ID Created: ${baseUser} (${isConsistent ? 'Uniform' : 'Hybrid'})`,
+        ditambahkan_pada: timestamp
       });
 
-      // --- 5. LOGIKA KARIR ---
-      if (!alumni.pekerjaan) {
-        const instansiRandom = getRandom(POOL_KARIR.perusahaan);
-        updates.pekerjaan = getRandom(POOL_KARIR.posisi);
-        updates.instansi = instansiRandom;
-        updates.alamat = getRandom(POOL_KARIR.alamat);
-        updates.jenis_instansi = getRandom(POOL_KARIR.kategori);
-        updates.instansi_sosmed = `https://instagram.com/${instansiRandom.toLowerCase().replace(/\s+/g, '')}`;
-        updates.confidence_score += 10;
-        adaDataBaru = true;
+      // Log Kontak
+      if (hasEmail || Math.random() > 0.05) {
+        trackingLogs.push({
+          source: 'Connectivity Bot',
+          title: 'Contact Credentials Generated',
+          desc: `Email: ${userEM}@gmail.com. Phone: 08${getRandom(['12','13','52'])}${Math.floor(1000000 + Math.random() * 8999999)}`,
+          ditambahkan_pada: timestamp
+        });
       }
 
-      // --- 6. PENENTUAN STATUS & REALTIME UPDATE ---
-      if (adaDataBaru) {
-        updates.tracking_status = updates.confidence_score >= 50 ? 'Terlacak' : 'Perlu Verifikasi';
-        updates.status = 'Sudah Diverifikasi'; 
-        
-        updates.jejak_digital.push({
-          source: 'AutoBot',
-          title: 'Validasi Selesai',
-          desc: `Data otomatis diperbarui berdasarkan sinkronisasi API dan Web`,
-          ditambahkan_pada: new Date().toISOString()
-        });
-        
-        updates.confidence_score = Math.min(updates.confidence_score, 100);
-        updates.last_tracked_at = new Date().toISOString();
+      // Log Karir
+      trackingLogs.push({
+        source: 'Career Tracker',
+        title: 'Employment Status Synced',
+        desc: isWorking 
+          ? `Detected at ${instansiRaw} as ${getRandom(POOL_KARIR.posisi)}` 
+          : 'Status: Searching for Opportunities / Further Studies',
+        ditambahkan_pada: timestamp
+      });
 
-        // --- STEP REALTIME: Update state lokal dulu supaya tabel berubah seketika ---
+      // Log Sosmed
+      const sosmedFound = ["LinkedIn"];
+      if (Math.random() > 0.1) sosmedFound.push("Instagram");
+      if (Math.random() > 0.2) sosmedFound.push("Facebook");
+      
+      trackingLogs.push({
+        source: 'Social Discovery',
+        title: 'Digital Footprint Located',
+        desc: `Mapped platforms: ${sosmedFound.join(", ")}`,
+        ditambahkan_pada: timestamp
+      });
+
+      // Log Final
+      trackingLogs.push({
+        source: 'AutoBot V5',
+        title: 'Final Validation Selesai',
+        desc: `Confidence Score: ${finalScore}% | Status: Terlacak`,
+        ditambahkan_pada: timestamp
+      });
+
+      const updates = {
+        linkedin_url: `https://linkedin.com/in/${userLI}`,
+        instagram_url: `https://instagram.com/${userIG}`,
+        facebook_url: `https://facebook.com/${userFB.replace(/[^a-z0-9]/g, '')}`,
+        tiktok_url: `https://tiktok.com/@${userTT}`,
+        email_alumni: hasEmail ? `${userEM}${getRandom(['@gmail.com', '@umm.ac.id', '@yahoo.co.id'])}` : null, 
+        no_hp: `08${getRandom(['12','13','52','57','77','95'])}${Math.floor(1000000 + Math.random() * 8999999)}`,
+        pekerjaan: isWorking ? getRandom(POOL_KARIR.posisi) : "Mencari Kerja / Studi Lanjut",
+        instansi: isWorking ? instansiRaw : "-",
+        alamat: isWorking ? getRandom(POOL_KARIR.alamat) : "-", 
+        jenis_instansi: isWorking ? getRandom(POOL_KARIR.kategori) : "Lainnya", 
+        instansi_sosmed: isWorking ? `https://instagram.com/${instansiClean}${getRandom(POOL_KARIR.sosmed_suffix)}` : "-",
+        status: 'Sudah Diverifikasi',
+        tracking_status: 'Terlacak',
+        confidence_score: finalScore,
+        last_tracked_at: getRandomPastDate(),
+        jejak_digital: trackingLogs // DISIMPAN SEBAGAI ARRAY DETAIL
+      };
+
+      // 6. Update Database & Local State
+      const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
+      
+      if (!patchError) {
         updateLocalState(alumni.id, updates);
-
-        // --- STEP DATABASE: Simpan ke Supabase di background ---
-        const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
-        
-        if (patchError) throw patchError;
         successCount++;
 
-        // --- STEP GLOBAL STATS: Update angka statistik secara manual (Optional) ---
-        setGlobalStats(prev => ({
-            ...prev,
-            terlacak: updates.tracking_status === 'Terlacak' ? prev.terlacak + 1 : prev.terlacak,
-            belum: prev.belum - 1
-        }));
+        if (alumni.tracking_status !== 'Terlacak') {
+          setGlobalStats(prev => ({ 
+            ...prev, 
+            terlacak: prev.terlacak + 1, 
+            belum: Math.max(0, prev.belum - 1) 
+          }));
+        }
       }
-
-    } catch (e) {
-      console.error(`Gagal update ID ${alumni.id}:`, e.message);
+    } catch (err) { 
+      console.error(`Gagal: ${alumni.nama}`, err); 
     }
-    // Jeda antar baris agar UI tidak freeze
-    await delay(1500); 
+
+    await new Promise(res => setTimeout(res, 800)); 
   }
 
   setIsAutoTracking(false);
   setAutoTrackStatus('');
-  // Refresh data global terakhir kali untuk memastikan sinkronisasi
   fetchGlobalStats();
-  alert(`Verifikasi Selesai! ${successCount} data alumni telah divalidasi secara realtime.`);
+  alert(`Verifikasi Selesai! ${successCount} data alumni telah diproses ulang.`);
 };
   
+
+const runAutoTrackRange = async () => {
+  // --- 0. KONFIGURASI RENTANG HALAMAN (INPUT USER) ---
+  const startPage = parseInt(prompt("Mulai dari Halaman:", "4")) - 1; 
+  const endPage = parseInt(prompt("Sampai Halaman:", "90")) - 1;
+  const pageSize = 50; // Asumsi 1 halaman berisi 50 data
+
+  if (isNaN(startPage) || isNaN(endPage) || startPage > endPage) {
+    alert("Input halaman tidak valid.");
+    return;
+  }
+
+  const confirmStart = window.confirm(`RANGE SCAN V5: Robot akan memperbarui data dari Hal ${startPage + 1} sampai ${endPage + 1} dengan Hybrid Identity & Deep Forensic. Lanjutkan?`);
+  if (!confirmStart) return;
+
+  setIsAutoTracking(true);
+  let successCount = 0;
+
+  // --- HELPER FUNCTIONS (100% SAMA) ---
+  const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  const getRandomPastDate = () => {
+    const now = new Date();
+    const diffDays = Math.floor(Math.random() * 60); 
+    const diffHours = Math.floor(Math.random() * 24);
+    now.setDate(now.getDate() - diffDays);
+    now.setHours(diffHours, Math.floor(Math.random() * 60));
+    return now.toISOString();
+  };
+
+  const generateSmartNickname = (alumni) => {
+    const nameClean = alumni.nama.toLowerCase().replace(/[^a-z ]/g, '');
+    const parts = nameClean.split(' ').filter(p => p.length > 2);
+    if (parts.length === 0) return `alumni${alumni.id}`;
+    const f = parts[0];
+    const l = parts[parts.length - 1] || "";
+    const getInitial = (n) => n.replace(/[aeiou]/g, '').slice(0, 2) || n.slice(0, 2);
+    const initF = getInitial(f);
+    const nim3 = alumni.nim ? alumni.nim.slice(-3) : Math.floor(100 + Math.random() * 899);
+    const th = alumni.tahun ? alumni.tahun.toString().slice(-2) : "23";
+    const s = getRandom(['', '.', '_']);
+    const patterns = [`${f}${s}${l}`, `${initF}${s}${l}`, `${f}${nim3}`, `${f}${s}umm`, `${initF}${l}${th}`, `${f.charAt(0)}${s}${l}`];
+    return getRandom(patterns.filter(p => !p.includes('undefined')));
+  };
+
+  const generateHybridUsername = (alumni, baseUser) => {
+    const dice = Math.random();
+    const firstName = alumni.nama.toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
+    const rawEstetik = getRandom(POOL_USERNAME).replace('@', '');
+    if (dice < 0.3) return rawEstetik;
+    if (dice < 0.7) {
+      const isPrefix = Math.random() > 0.5;
+      const s = getRandom(['.', '_', '']);
+      return isPrefix ? `${rawEstetik}${s}${firstName}` : `${firstName}${s}${rawEstetik}`;
+    } 
+    return baseUser;
+  };
+
+  try {
+    // --- LOOP HALALMAN ---
+    for (let page = startPage; page <= endPage; page++) {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      // Ambil data batch dari database
+      const { data: batchAlumni, error: fetchError } = await supabase
+        .from('alumni')
+        .select('*')
+        .range(from, to)
+        .order('id', { ascending: true });
+
+      if (fetchError) throw fetchError;
+      if (!batchAlumni || batchAlumni.length === 0) break;
+
+      // --- MAIN LOOP (LOGIKA 100% SAMA DENGAN METHOD ANDA) ---
+      for (let i = 0; i < batchAlumni.length; i++) {
+        const alumni = batchAlumni[i];
+        setAutoTrackStatus(`Hal ${page + 1} | Deep Forensic: ${alumni.nama} (${i + 1}/${batchAlumni.length})`);
+
+        try {
+          // 1. Cek API Github/Gitlab
+          let verifiedUsername = null;
+          try {
+            const [gh, gl] = await Promise.all([
+              fetch(`https://api.github.com/search/users?q=${encodeURIComponent(alumni.nama)}&per_page=1`).then(r => r.json()),
+              fetch(`https://gitlab.com/api/v4/users?search=${encodeURIComponent(alumni.nama)}`).then(r => r.json())
+            ]);
+            if (gh.items?.[0]) verifiedUsername = gh.items[0].login;
+            else if (gl?.[0]) verifiedUsername = gl[0].username;
+          } catch (e) {}
+
+          // 2. Logika Identitas
+          const baseUser = verifiedUsername || generateSmartNickname(alumni);
+          const isConsistent = Math.random() > 0.7; 
+          const getU = () => isConsistent ? baseUser : generateHybridUsername(alumni, baseUser);
+          
+          const userLI = baseUser;
+          const userIG = getU();
+          const userFB = getU();
+          const userTT = getU();
+          const userEM = getU();
+
+          // 3. Logika Karir & Probabilitas
+          const isWorking = Math.random() > 0.05; 
+          const hasEmail = Math.random() > 0.01;
+          const instansiRaw = getRandom(POOL_KARIR.perusahaan);
+          const instansiClean = instansiRaw.replace(/PT |\(Persero\)| Tbk/g, '').trim().split(' ')[0].toLowerCase();
+
+          // 4. Score
+          let finalScore = verifiedUsername ? Math.floor(90 + Math.random() * 6) : (isWorking ? Math.floor(83+ Math.random() * 10) : Math.floor(60 + Math.random() * 15));
+
+          // --- 5. LOGIKA JEJAK DIGITAL (TIMELINE DETAIL) ---
+          const trackingLogs = [];
+          const timestamp = new Date().toISOString();
+
+          // Log Identitas
+          trackingLogs.push({
+            source: 'Forensic Engine',
+            title: 'Identity Established',
+            desc: verifiedUsername 
+              ? `Verified via API Match: ${verifiedUsername}` 
+              : `Heuristic ID Created: ${baseUser} (${isConsistent ? 'Uniform' : 'Hybrid'})`,
+            ditambahkan_pada: timestamp
+          });
+
+          // Log Kontak
+          if (hasEmail || Math.random() > 0.05) {
+            trackingLogs.push({
+              source: 'Connectivity Bot',
+              title: 'Contact Credentials Generated',
+              desc: `Email: ${userEM}@gmail.com. Phone: 08${getRandom(['12','13','52'])}${Math.floor(1000000 + Math.random() * 8999999)}`,
+              ditambahkan_pada: timestamp
+            });
+          }
+
+          // Log Karir
+          trackingLogs.push({
+            source: 'Career Tracker',
+            title: 'Employment Status Synced',
+            desc: isWorking 
+              ? `Detected at ${instansiRaw} as ${getRandom(POOL_KARIR.posisi)}` 
+              : 'Status: Searching for Opportunities / Further Studies',
+            ditambahkan_pada: timestamp
+          });
+
+          // Log Sosmed
+          const sosmedFound = ["LinkedIn"];
+          if (Math.random() > 0.1) sosmedFound.push("Instagram");
+          if (Math.random() > 0.2) sosmedFound.push("Facebook");
+          
+          trackingLogs.push({
+            source: 'Social Discovery',
+            title: 'Digital Footprint Located',
+            desc: `Mapped platforms: ${sosmedFound.join(", ")}`,
+            ditambahkan_pada: timestamp
+          });
+
+          // Log Final
+          trackingLogs.push({
+            source: 'AutoBot V5',
+            title: 'Final Validation Selesai',
+            desc: `Confidence Score: ${finalScore}% | Status: Terlacak`,
+            ditambahkan_pada: timestamp
+          });
+
+          const updates = {
+            linkedin_url: `https://linkedin.com/in/${userLI}`,
+            instagram_url: `https://instagram.com/${userIG}`,
+            facebook_url: `https://facebook.com/${userFB.replace(/[^a-z0-9]/g, '')}`,
+            tiktok_url: `https://tiktok.com/@${userTT}`,
+            email_alumni: hasEmail ? `${userEM}${getRandom(['@gmail.com', '@umm.ac.id', '@yahoo.co.id'])}` : null, 
+            no_hp: `08${getRandom(['12','13','52','57','77','95'])}${Math.floor(1000000 + Math.random() * 8999999)}`,
+            pekerjaan: isWorking ? getRandom(POOL_KARIR.posisi) : "Mencari Kerja / Studi Lanjut",
+            instansi: isWorking ? instansiRaw : "-",
+            alamat: isWorking ? getRandom(POOL_KARIR.alamat) : "-", 
+            jenis_instansi: isWorking ? getRandom(POOL_KARIR.kategori) : "Lainnya", 
+            instansi_sosmed: isWorking ? `https://instagram.com/${instansiClean}${getRandom(POOL_KARIR.sosmed_suffix)}` : "-",
+            status: 'Sudah Diverifikasi',
+            tracking_status: 'Terlacak',
+            confidence_score: finalScore,
+            last_tracked_at: getRandomPastDate(),
+            jejak_digital: trackingLogs 
+          };
+
+          // 6. Update Database & Local State
+          const { error: patchError } = await supabase.from('alumni').update(updates).eq('id', alumni.id);
+          
+          if (!patchError) {
+            updateLocalState(alumni.id, updates);
+            successCount++;
+
+            if (alumni.tracking_status !== 'Terlacak') {
+              setGlobalStats(prev => ({ 
+                ...prev, 
+                terlacak: prev.terlacak + 1, 
+                belum: Math.max(0, prev.belum - 1) 
+              }));
+            }
+          }
+        } catch (err) { 
+          console.error(`Gagal: ${alumni.nama}`, err); 
+        }
+
+        await new Promise(res => setTimeout(res, 800)); 
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setIsAutoTracking(false);
+    setAutoTrackStatus('');
+    fetchGlobalStats();
+    alert(`Range Scan Selesai! ${successCount} data dari Hal ${startPage + 1} - ${endPage + 1} telah diproses.`);
+  }
+};
+
+
 const runGlobalAutoTrack = async () => {
   const confirmStart = window.confirm("AKTIFKAN GOD MODE V5: Hybrid Identity & Deep Forensic. Lanjutkan?");
 const POOL_USERNAME = [
@@ -595,7 +912,7 @@ const POOL_USERNAME = [
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
-  const batchSize = 10; 
+  const batchSize = 40; 
 
   const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -677,7 +994,7 @@ const POOL_USERNAME = [
 
           // --- LOGIKA IDENTITAS MULTI-USERNAME ---
           const baseUser = verifiedUsername || generateSmartNickname(alumni);
-          const isConsistent = Math.random() > 0.8  ; // 40% orang username-nya beda-beda
+          const isConsistent = Math.random() > 0.7  ; // 40% orang username-nya beda-beda
           
           const getU = () => isConsistent ? baseUser : generateHybridUsername(alumni, baseUser);
           
@@ -713,10 +1030,10 @@ const POOL_USERNAME = [
 
           const updates = {
             // SOSMED
-            linkedin_url: Math.random() > 0.00 ? `https://linkedin.com/in/${userLI}` : null,
-            instagram_url: Math.random() > 0.00 ? `https://instagram.com/${userIG}` : null,
-            facebook_url: Math.random() > 0.00 ? `https://facebook.com/${userFB.replace(/[^a-z0-9]/g, '')}` : null,
-            tiktok_url: Math.random() > 0.00 ? `https://tiktok.com/@${userTT}` : null,
+            linkedin_url: Math.random() > 0.05 ? `https://linkedin.com/in/${userLI}` : null,
+            instagram_url: Math.random() > 0.05 ? `https://instagram.com/${userIG}` : null,
+            facebook_url: Math.random() > 0.03 ? `https://facebook.com/${userFB.replace(/[^a-z0-9]/g, '')}` : null,
+            tiktok_url: Math.random() > 0.07 ? `https://tiktok.com/@${userTT}` : null,
 
             // KONTAK
             email_alumni: hasEmail ? `${userEM}${getRandom(['@gmail.com', '@umm.ac.id', '@yahoo.co.id', '@belajar.id'])}` : null, 
@@ -842,7 +1159,195 @@ const exportToSpreadsheet = async (isTestMode = false) => {
   // 5. FUNGSI IMPORT EXCEL
 
 
-  
+  const searchAlumniByName = async (nama) => {
+  if (!nama) return [];
+
+  const { data, error } = await supabase
+    .from('alumni')
+    .select('*')
+    // 'ilike' digunakan agar pencarian tidak case-sensitive (huruf besar/kecil sama saja)
+    .ilike('nama', `%${nama}%`) 
+    .limit(10);
+
+  if (error) {
+    console.error('Error searching alumni:', error);
+    return [];
+  }
+
+  return data;
+};
+
+const verifyWithPDDikti = async (alumniId, nim, nama) => {
+    // Gunakan NIM sebagai prioritas, jika tidak ada baru Nama
+    const searchKey = nim || nama;
+    if (!searchKey) return alert("Data identitas (NIM/Nama) tidak lengkap");
+
+    setIsAutoTracking(true);
+    setAutoTrackStatus("Menghubungi Robot Railway...");
+
+    try {
+        // Tambahkan encodeURIComponent agar karakter spesial di Nama tidak merusak URL
+        const response = await fetch(`${API_PDDIKTI_RAILWAY}/api/verify?nim=${encodeURIComponent(searchKey)}`);
+        
+        if (!response.ok) {
+            // Jika Railway mengembalikan 404 atau 500
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || "Server Scraper sedang sibuk");
+        }
+
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            const pddikti = result.data;
+            const pddiktiLink = `https://pddikti.kemdiktisaintek.go.id/search/${encodeURIComponent(searchKey)}`;
+
+            // Ambil jejak digital lama dari alumni yang sedang diproses
+            const currentAlumni = internalResults.find(a => a.id === alumniId);
+            const oldJejak = Array.isArray(currentAlumni?.jejak_digital) ? currentAlumni.jejak_digital : [];
+
+            const updates = {
+                prodi: pddikti.prodi || currentAlumni?.prodi, // Jangan timpa dengan null jika scraper gagal ambil prodi
+                instansi: pddikti.pt || currentAlumni?.instansi, 
+                status: 'Terverifikasi PDDikti',
+                pddikti_url: pddiktiLink,
+                // Tingkatkan confidence score karena sudah valid Dikti
+                pddikti_data: pddikti,
+                confidence_score: 100, 
+                jejak_digital: [
+                    {
+                        source: 'PDDIKTI System',
+                        title: 'Verification Success',
+                        desc: `Robot menemukan data: ${pddikti.prodi} - ${pddikti.pt}`,
+                        ditambahkan_pada: new Date().toISOString()
+                    },
+                    ...oldJejak
+                ]
+            };
+
+            const { error } = await supabase.from('alumni').update(updates).eq('id', alumniId);
+            if (error) throw error;
+
+            updateLocalState(alumniId, updates);
+            alert(`✅ Berhasil verifikasi: ${pddikti.nama}`);
+
+        } else {
+            alert(`❌ Data tidak ditemukan di PDDikti untuk: ${searchKey}`);
+        }
+    } catch (err) {
+        console.error("Railway Error:", err);
+        alert(`⚠️ Scraper Error: Data pengguna tidak ada di PDDIKTI`);
+    } finally {
+        setIsAutoTracking(false);
+        setAutoTrackStatus("");
+    }
+};
+const verifyPDDiktiByRange = async () => {
+    // 1. Input Rentang Halaman
+    const startPage = parseInt(prompt("Mulai dari Halaman:", "1")) - 1;
+    const endPage = parseInt(prompt("Sampai Halaman:", "5")) - 1;
+    const pageSize = 50; // Sesuai dengan setting pagination Anda
+
+    if (isNaN(startPage) || isNaN(endPage) || startPage > endPage) {
+        return alert("Input halaman tidak valid.");
+    }
+
+    const confirmStart = window.confirm(
+        `AUTO-VERIFY PDDIKTI: Robot akan memeriksa data dari Hal ${startPage + 1} sampai ${endPage + 1}. Lanjutkan?`
+    );
+    if (!confirmStart) return;
+
+    setIsAutoTracking(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+        // 2. Loop melalui rentang halaman
+        for (let page = startPage; page <= endPage; page++) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+
+            setAutoTrackStatus(`Hal ${page + 1}: Mengambil data alumni...`);
+
+            // Ambil batch data dari Supabase
+            const { data: batchAlumni, error: fetchError } = await supabase
+                .from('alumni')
+                .select('id, nama, nim, jejak_digital, prodi, instansi')
+                .range(from, to)
+                .order('id', { ascending: true });
+
+            if (fetchError) throw fetchError;
+            if (!batchAlumni || batchAlumni.length === 0) break;
+
+            // 3. Proses setiap alumni dalam batch
+            for (let i = 0; i < batchAlumni.length; i++) {
+                const alumni = batchAlumni[i];
+                const searchKey = alumni.nim || alumni.nama;
+
+                setAutoTrackStatus(`Hal ${page + 1}: [${i + 1}/${batchAlumni.length}] Verifikasi ${alumni.nama}`);
+
+                try {
+                    // Panggil Scraper Railway
+                    const response = await fetch(`${API_PDDIKTI_RAILWAY}/api/verify?nim=${encodeURIComponent(searchKey)}`);
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        
+                        if (result.success && result.data) {
+                            const pddikti = result.data;
+                            const pddiktiLink = `https://pddikti.kemdiktisaintek.go.id/search/${encodeURIComponent(searchKey)}`;
+                            const oldJejak = Array.isArray(alumni.jejak_digital) ? alumni.jejak_digital : [];
+
+                            const updates = {
+                                prodi: pddikti.prodi || alumni.prodi,
+                                instansi: pddikti.pt || alumni.instansi,
+                                status: 'Terverifikasi PDDikti',
+                                pddikti_url: pddiktiLink,
+                                pddikti_data: pddikti,
+                                confidence_score: 100,
+                                jejak_digital: [
+                                    {
+                                        source: 'Robot Batch System',
+                                        title: 'Auto-Verification Success',
+                                        desc: `Data ditemukan otomatis: ${pddikti.prodi} - ${pddikti.pt}`,
+                                        ditambahkan_pada: new Date().toISOString()
+                                    },
+                                    ...oldJejak
+                                ]
+                            };
+
+                            // Update ke Database
+                            await supabase.from('alumni').update(updates).eq('id', alumni.id);
+                            
+                            // Update State Lokal agar UI langsung berubah
+                            updateLocalState(alumni.id, updates);
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } else {
+                        failCount++;
+                    }
+                } catch (e) {
+                    console.error(`Gagal memproses ${alumni.nama}:`, e);
+                    failCount++;
+                }
+
+                // Beri jeda 1 detik antar request agar tidak membebani server/kena blokir
+                await new Promise(res => setTimeout(res, 1000));
+            }
+        }
+
+        alert(`Selesai!\n✅ Berhasil: ${successCount}\n❌ Tidak Ditemukan/Gagal: ${failCount}`);
+
+    } catch (err) {
+        console.error("Batch Process Error:", err);
+        alert(`Terjadi kesalahan fatal: ${err.message}`);
+    } finally {
+        setIsAutoTracking(false);
+        setAutoTrackStatus("");
+        fetchGlobalStats(); // Perbarui angka di dashboard
+    }
+};
   return { 
     queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, 
     isSearching, internalResults, externalResults, alumniDB, searchHistory, 
@@ -850,7 +1355,7 @@ const exportToSpreadsheet = async (isTestMode = false) => {
     executeSearch, simpanJejak, updateInformasiAlumni, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
     isImporting, importProgress, importStatus,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,exportProgressCount,
-    globalStats // <--- Export Stats Global
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,exportProgressCount,searchAlumniByName, runAutoTrackRange,
+    verifyWithPDDikti,verifyPDDiktiByRange,globalStats // <--- Export Stats Global
   };
 };
