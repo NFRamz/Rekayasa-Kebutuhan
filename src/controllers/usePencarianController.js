@@ -636,7 +636,7 @@ const runAutoTrackRange = async () => {
     return;
   }
 
-  const confirmStart = window.confirm(`RANGE SCAN V5: Robot akan memperbarui data dari Hal ${startPage + 1} sampai ${endPage + 1} dengan Hybrid Identity & Deep Forensic. Lanjutkan?`);
+  const confirmStart = window.confirm(` Robot akan memperbarui data dari Hal ${startPage + 1} sampai ${endPage + 1}. Lanjutkan?`);
   if (!confirmStart) return;
 
   setIsAutoTracking(true);
@@ -842,7 +842,7 @@ const runAutoTrackRange = async () => {
 
 
 const runGlobalAutoTrack = async () => {
-  const confirmStart = window.confirm("AKTIFKAN GOD MODE V5: Hybrid Identity & Deep Forensic. Lanjutkan?");
+  const confirmStart = window.confirm("Akan melakukan pelacakan terhadap semua data. Lanjutkan?");
 const POOL_USERNAME = [
   "auroradreams", "celestialwhisper", "etherealmoments", "goldenhourglow", "lunarlullaby", "mistymoonlight", "pearlypetals", "rosegoldrhapsody", "serendipityseeker", "stardustsoul", "velvetdreams", "whimsicalwanderer", "wildflowerwishes", "zenithzephyr", "cottoncandy.skies", "daydream.believer", "enchanted.whispers", "fairytalefragments", "kaleidoscope.kisses", "lavender.lullabies",
   "blaze.runner", "cosmic.rebel", "electric.enigma", "fierce.phoenix", "gravity.defier", "maverick.mind", "neon.nomad", "quantum.quester", "rebel.soul", "shadow.striker", "thunder.thief", "urban.legend", "velocity.vortex", "wild.wanderer", "zenith.zephyr", "apex.adventurer", "chaos.conqueror", "dream.chaser", "epic.explorer", "fearless.frontier",
