@@ -418,15 +418,11 @@ export default function PencarianView({ setActiveTab }) {
       <ExternalLink size={14} className="text-indigo-300" />
     </div>
     
-    <p className="text-[12px] text-indigo-200 mb-3 italic">Data telah ditemukan dan diverifikasi melalui robot PDDikti.</p>
+    <p className="text-[12px] text-indigo-200 mb-3 italic">Data telah ditemukan dan diverifikasi melalui PDDikti.</p>
 
     {/* --- MENAMPILKAN DATA DARI JSONB --- */}
     {selectedAlumni.pddikti_data && (
-      <div className="bg-black/20 rounded-xl p-3 mb-4 space-y-2 border border-white/5 font-mono text-[11px]">
-        <div className="flex justify-between items-start gap-4">
-          <span className="text-indigo-300/70 uppercase">Mahasiswa</span>
-          <span className="text-white font-bold text-right uppercase">{selectedAlumni.pddikti_data.nama}</span>
-        </div>
+      <div className="bg-black/20 rounded-xl p-3 mb-4 space-y-2 border border-white/5 font-mono text-[12px]">
         <div className="flex justify-between border-t border-white/5 pt-2">
           <span className="text-indigo-300/70 uppercase">NIM</span>
           <span className="text-white font-bold">{selectedAlumni.pddikti_data.nim}</span>
