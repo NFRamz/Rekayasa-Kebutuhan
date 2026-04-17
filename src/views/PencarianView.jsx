@@ -48,7 +48,12 @@ export default function PencarianView({ setActiveTab }) {
   const filteredTableData = internalResults.filter(item => 
     item.nama.toLowerCase().includes(tableFilter.toLowerCase()) || 
     (item.nim && item.nim.toLowerCase().includes(tableFilter.toLowerCase()))
-  );
+  ).sort((a, b) => {
+    // yang punya pddikti_url (terverifikasi) di atas
+    if (a.pddikti_url && !b.pddikti_url) return -1;
+    if (!a.pddikti_url && b.pddikti_url) return 1;
+    return 0;
+  });
 
   const SaveTracerButton = ({ item }) => (
     <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1">
@@ -451,10 +456,10 @@ export default function PencarianView({ setActiveTab }) {
 
                         {/* 1. AKADEMIK */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><BookOpen size={12}/> Akademik</label>
+                            <label className="text-[10px] font-black text-indigo-900 uppercase flex items-center gap-2 border-b border-indigo-100 pb-1"><BookOpen size={12}/> Akademik & Tanggal Lulus</label>
                             <div className="grid grid-cols-2 gap-2">
                                 <input key={"prodi-"+selectedAlumni.prodi} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.prodi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'prodi', e.target.value)} placeholder="Prodi" />
-                                <input key={"tahun-"+selectedAlumni.tahun} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.tahun} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'tahun', e.target.value)} placeholder="Tahun Lulus" />
+                                <input key={"tahun-"+selectedAlumni.tahun} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.tanggal_lulus} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'tahun', e.target.value)} placeholder="Tahun Lulus" />
                             </div>
                         </div>
 
@@ -482,6 +487,8 @@ export default function PencarianView({ setActiveTab }) {
                                 <option value="PNS">PNS / ASN</option>
                                 <option value="Swasta">Swasta</option>
                                 <option value="Wirausaha">Wirausaha / Founder</option>
+                                <option value="BUMN">BUMN</option>
+                              
                             </select>
                             <input key={"pek-"+selectedAlumni.pekerjaan} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.pekerjaan} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'pekerjaan', e.target.value)} placeholder="Posisi / Jabatan" />
                             <input key={"inst-"+selectedAlumni.instansi} className="w-full text-xs font-bold p-2 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" defaultValue={selectedAlumni.instansi} onBlur={(e) => updateInformasiAlumni(selectedAlumni.id, 'instansi', e.target.value)} placeholder="Nama Tempat Bekerja" />
