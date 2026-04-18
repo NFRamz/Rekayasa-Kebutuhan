@@ -309,8 +309,9 @@ const POOL_USERNAME = [
           .from('alumni')
           .select('*', { count: 'exact' })
           .range(from, to)
-.order('pddikti_url', { ascending: false, nullsFirst: false })
-.order('confidence_score', { ascending: false });
+          .order('id', { ascending: false })
+          .order('pddikti_url', { ascending: false, nullsFirst: false })
+          .order('confidence_score', { ascending: false });
       if (!error) {
           setAlumniDB(data);
           setTotalData(count || 0);
