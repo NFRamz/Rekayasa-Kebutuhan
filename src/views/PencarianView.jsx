@@ -222,7 +222,15 @@ export default function PencarianView({ setActiveTab }) {
               </a>
           </div>
       )}
-      
+      <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm animate-in slide-in-from-top-4 fade-in duration-500">
+              <div className="flex items-center gap-3">
+                  <div className="bg-emerald-500 p-2 rounded-full text-white"><Info size={20} /></div>
+                  <div>
+                      <p className="font-bold text-emerald-800 text-sm">● Mohon Tunggu jika angka diatas masih 0</p>
+                      <p className="font-bold text-emerald-800 text-sm">● Jika belum muncul, silahkan reload ulang dengan klik F5 atau tombol reload di browser</p>
+                  </div>
+              </div>
+          </div>
       {/* FORM PENCARIAN WEB */}
       <form onSubmit={executeSearch} className="bg-white p-6 rounded-2xl shadow-xl shadow-indigo-900/5 border border-gray-100 mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 mt-4">
