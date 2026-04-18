@@ -48,12 +48,7 @@ export default function PencarianView({ setActiveTab }) {
   const filteredTableData = internalResults.filter(item => 
     item.nama.toLowerCase().includes(tableFilter.toLowerCase()) || 
     (item.nim && item.nim.toLowerCase().includes(tableFilter.toLowerCase()))
-  ).sort((a, b) => {
-    // yang punya pddikti_url (terverifikasi) di atas
-    if (a.pddikti_url && !b.pddikti_url) return -1;
-    if (!a.pddikti_url && b.pddikti_url) return 1;
-    return 0;
-  });
+  );
 
   const SaveTracerButton = ({ item }) => (
     <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1">
@@ -500,7 +495,10 @@ export default function PencarianView({ setActiveTab }) {
                         <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                             <h5 className="font-black text-slate-900 text-[10px] uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-2 mb-2"><History className="text-indigo-600" size={14} /> Audit Trail Perubahan</h5>
                             <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-                                {selectedAlumni.jejak_digital?.map((jejak, i) => (
+                                {(Array.isArray(selectedAlumni.jejak_digital)
+  ? selectedAlumni.jejak_digital
+  : []
+).map((jejak, i) => (
                                     <div key={i} className={`p-3 rounded-xl border text-[13px] shadow-sm ${jejak.source.includes("SISTEM") ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
                                         <div className="flex justify-between items-start mb-1">
                                           <span className={`font-black uppercase px-1.5 py-0.5 rounded text-[7px] ${jejak.source.includes("SISTEM") ? 'bg-amber-600 text-white' : 'bg-indigo-600 text-white'}`}>{jejak.source}</span>
