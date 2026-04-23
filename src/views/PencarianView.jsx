@@ -3,18 +3,18 @@ import {
   Search, Database, Globe, BookOpen, User, Save, Clock, History, 
   ChevronRight, MapPin, Briefcase, Activity, ChevronLeft, ExternalLink,
   Eye, Edit2, Link, Download, Upload, Smartphone, Building, CloudLightning, 
-  FileCheck, Github, Wand, UserPlus, Info, AlertCircle, CheckCircle2, Timer, Loader2,
+  FileCheck, Github, Wand, UserPlus, Info, AlertCircle, CheckCircle2, Timer, Loader2,X, Table
 } from 'lucide-react';
 import { usePencarianController } from '../controllers/usePencarianController';
 
 export default function PencarianView({ setActiveTab }) {
   const { 
     queryNama, setQueryNama, queryAfiliasi, setQueryAfiliasi, queryKonteks, setQueryKonteks, 
-    isSearching, internalResults, externalResults, alumniDB, executeSearch, simpanJejak, updateInformasiAlumni,verifyPDDiktiByRange,
+    isSearching, internalResults, externalResults, alumniDB, executeSearch, simpanJejak, updateInformasiAlumni,verifyPDDiktiByRange,updatePDDiktiLinksByRange,
     currentPage, setCurrentPage, totalData, searchHistory, 
     exportToSpreadsheet, isExporting, exportProgress, successSheetUrl,
     isImporting, importProgress, importStatus, handleImportExcel,exportProgressCount,
-    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,runAutoTrackRange,
+    isAutoTracking, autoTrackStatus, runAutoTrackCurrentPage,runGlobalAutoTrack,runAutoTrackRange,runPageAutoTrack,exportSamplingToSpreadsheet,fetchSamplingDataForView,
     globalStats, verifyWithPDDikti // Pastikan verifyWithPDDikti di-destructure di sini
   } = usePencarianController();
 
@@ -23,6 +23,24 @@ export default function PencarianView({ setActiveTab }) {
   const [tableFilter, setTableFilter] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(true);
 
+// STATE MODE SAMPLING
+  const [isSamplingMode, setIsSamplingMode] = useState(false);
+  const [samplingData, setSamplingData] = useState([]);
+  const [isLoadingSampling, setIsLoadingSampling] = useState(false);
+// HANDLER MODE SAMPLING
+  const handleViewSampling = async () => {
+      setIsSamplingMode(true);
+      setIsLoadingSampling(true);
+      try {
+          const data = await fetchSamplingDataForView();
+          setSamplingData(data);
+      } catch (error) {
+          alert("Gagal memuat data sampling");
+          setIsSamplingMode(false);
+      } finally {
+          setIsLoadingSampling(false);
+      }
+  };
 
   useEffect(() => {
     // Mengecek jika alumniDB sudah ter-load (meskipun kosong/length 0, artinya fetch selesai)
@@ -60,7 +78,9 @@ export default function PencarianView({ setActiveTab }) {
     </div>
   );
 
-  const selectedAlumni = internalResults.find(a => a.id.toString() === selectedReportId?.toString()) || alumniDB.find(a => a.id.toString() === selectedReportId?.toString());
+  const selectedAlumni = internalResults.find(a => a.id.toString() === selectedReportId?.toString()) || 
+                         alumniDB.find(a => a.id.toString() === selectedReportId?.toString()) || 
+                         samplingData.find(a => a.id.toString() === selectedReportId?.toString());
 
   const getStatusColor = (status) => {
     if (status === 'Terlacak') return 'bg-emerald-100 text-emerald-700';
@@ -92,6 +112,11 @@ export default function PencarianView({ setActiveTab }) {
     </div>
   );
 
+  const finalValueNum = Number(globalStats.finalValue || 0);
+const accuracyNum = Number(globalStats.accuracyScore || 0);
+const completenessNum = Number(globalStats.completenessScore || 0);
+const coverageNum = Number(globalStats.coverageScore || 0);
+const tableDataToRender = isSamplingMode ? samplingData : filteredTableData;
   return (
     <div className="max-w-[1600px] w-full mx-auto animate-in fade-in duration-500 px-4 pb-20 font-sans relative">
       
@@ -204,7 +229,143 @@ export default function PencarianView({ setActiveTab }) {
           <p className="text-2xl font-black text-slate-800">{displayStats.belum.toLocaleString('id-ID')}</p>
         </div>
       </div>
+      {/* --- ELEMEN BARU: ACCURACY & HASIL NILAI AKHIR --- */}
 
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    
+{/* BOX ACCURACY (Verified Data) */}
+    <div className="bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white border border-slate-700 flex flex-col justify-between">
+        <div>
+            <div className="flex justify-between items-start">
+                <div>
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                        <FileCheck size={14}/> Accuracy Dashboard
+                    </span>
+                    <h3 className="text-4xl font-black mt-2">
+                        {globalStats.pddiktiValidCount?.toLocaleString('id-ID') || 0}
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase">
+                        Data Terverifikasi PDDikti dan pengecekan ulang pada data terlacak melalui WhiteBridge.ai API                    </p>
+                </div>
+
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl text-center min-w-[80px]">
+                    <p className="text-[9px] font-black uppercase text-emerald-400">Accuracy</p>
+                    <p className="text-xl font-black text-emerald-400">
+                        {accuracyNum.toFixed(1)}%
+                    </p>
+                </div>
+            </div>
+
+            <div className="mt-6 w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div 
+                    className="bg-emerald-500 h-full transition-all duration-1000" 
+                    style={{ width: `${Math.min(accuracyNum, 100)}%` }}
+                ></div>
+            </div>
+        </div>
+
+        {/* TOMBOL CTA EXPORT SAMPLING */}
+        <div className="mt-6 border-t border-slate-700/50 pt-4 flex justify-end">
+            {/* TOMBOL CTA EXPORT & VIEW SAMPLING */}
+        <div className="mt-6 border-t border-slate-700/50 pt-4 flex justify-end gap-3">
+            
+            {/* TOMBOL 1: LIHAT TABEL 
+            <button
+                onClick={handleViewSampling}
+                disabled={isExporting || isLoadingSampling} 
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-slate-800 text-indigo-400 border border-slate-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-500"
+            >
+                <Eye size={14} /> Lihat Tabel Sampel
+            </button>
+            */}
+
+            {/* TOMBOL 2: EXPORT EXCEL (Tombol aslimu) */}
+            <button
+                onClick={exportSamplingToSpreadsheet}
+                disabled={isExporting} 
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                    isExporting 
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                    : 'bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                }`}
+            >
+                {isExporting ? (
+                    <span className="animate-pulse">Memproses Data...</span>
+                ) : (
+                    <>
+                        <Download size={14} />
+                        Unduh Sampel Evaluasi (500)
+                    </>
+                )}
+            </button>
+        </div>
+        </div>
+    </div>
+
+    {/* BOX NILAI AKHIR */}
+    <div className="bg-white p-6 rounded-[2rem] border-2 border-indigo-600 shadow-xl flex items-center gap-6">
+        <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+            <svg className="absolute w-full h-full -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#f1f5f9" strokeWidth="8" fill="transparent" />
+                <circle 
+                    cx="48" 
+                    cy="48" 
+                    r="40" 
+                    stroke="#4f46e5" 
+                    strokeWidth="8" 
+                    fill="transparent" 
+                    strokeDasharray="251.32"
+                    strokeDashoffset={251.32 - (Math.min(finalValueNum,100) / 100) * 251.32}
+                    strokeLinecap="round" 
+                    className="transition-all duration-1000" 
+                />
+            </svg>
+
+            <span className="text-2xl font-black text-slate-800">
+                {Math.floor(finalValueNum)}
+            </span>
+        </div>
+
+        <div className="flex-1 space-y-2">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                Parameter Penilaian
+            </h4>
+            
+            {/* Coverage */}
+            <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                <span>1. Coverage (40%)</span>
+                <span className="text-indigo-600">
+                    {coverageNum || 0}%
+                </span>
+            </div>
+
+            {/* Accuracy */}
+            <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                <span>2. Accuracy (40%)</span>
+                <span className="text-indigo-600">
+                    {accuracyNum.toFixed(1)}%
+                </span>
+            </div>
+
+            {/* Completeness */}
+            <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                <span>3. Completeness (20%)</span>
+                <span className="text-indigo-600">
+                    {completenessNum.toFixed(1)}%
+                </span>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex justify-between items-center mt-1">
+                <span className="text-[10px] font-black text-indigo-600 uppercase">
+                    HASIL SKOR AKHIR
+                </span>
+                <span className="text-xl font-black text-indigo-600">
+                    {finalValueNum.toFixed(2)}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
 
 
       {/* KOTAK NOTIFIKASI SUKSES */}
@@ -280,6 +441,8 @@ export default function PencarianView({ setActiveTab }) {
         </div>
       )}
 
+
+
       {/* AREA UTAMA (TABEL & VALIDATOR) */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         
@@ -287,10 +450,26 @@ export default function PencarianView({ setActiveTab }) {
         <div className="w-full lg:w-2/3">
             <div className="bg-white rounded-3xl border border-gray-200 shadow-sm flex flex-col h-[750px] overflow-hidden">
                 <div className="bg-gray-50 p-4 border-b border-gray-200 shrink-0 flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <span className="font-black text-xs uppercase text-gray-600 flex items-center gap-2"><Database size={14}/> Data Alumni</span>
+                    <span className="font-black text-xs uppercase text-gray-600 flex items-center gap-2">
+                        <Database size={14}/> 
+                        {isSamplingMode ? (
+                            <span className="text-indigo-600">Mode Sampling Evaluasi (500 Data)</span>
+                        ) : 'Data Alumni'}
+                    </span>
                     
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <button 
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {isSamplingMode ? (
+                            // TOMBOL KELUAR MODE SAMPLING
+                            <button 
+                                onClick={() => setIsSamplingMode(false)} 
+                                className="flex items-center gap-2 px-4 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all border border-red-200 active:scale-95"
+                            >
+                                <X size={14} /> Tutup Mode Sampel
+                            </button>
+                        ) : (
+                            // TOMBOL-TOMBOL ASLI (Hanya tampil di mode normal)
+                            <>
+                                 <button 
                             onClick={verifyPDDiktiByRange}
                             disabled={isAutoTracking || isSearching || isExporting || isImporting}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all w-full sm:w-auto justify-center ${
@@ -304,7 +483,7 @@ export default function PencarianView({ setActiveTab }) {
                         </button>
                         
                         <button 
-                            onClick={runAutoTrackRange}
+                            onClick={runAutoTrackCurrentPage}
                             disabled={isAutoTracking || isSearching || isExporting || isImporting}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all w-full sm:w-auto justify-center ${
                                 isAutoTracking 
@@ -329,10 +508,12 @@ export default function PencarianView({ setActiveTab }) {
                             {isAutoTracking ? autoTrackStatus : 'Lacak Otomatis Seluruh Data'}
                         </button>
 
-                        <div className="relative w-full sm:w-48">
-                            <Search size={14} className="absolute left-3 top-2 text-gray-400" />
-                            <input type="text" placeholder="Cari di halaman ini" className="w-full pl-8 pr-4 py-1.5 text-xs font-bold border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500" value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} />
-                        </div>
+                                <div className="relative w-full sm:w-48">
+                                    
+                                    <input type="text" placeholder="Cari di halaman ini" className="..." value={tableFilter} onChange={(e) => setTableFilter(e.target.value)} />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -343,12 +524,26 @@ export default function PencarianView({ setActiveTab }) {
                                 <th className="p-4 pl-6">INFO ALUMNI</th><th className="p-4">AKADEMIK</th><th className="p-4">KATEGORI</th><th className="p-4">STATUS</th><th className="p-4">CONFIDENCE</th><th className="p-4 pr-6">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredTableData.map((item) => {
+                        <tbody className="divide-y divide-slate-100 relative">
+                            {/* LOADING OVERLAY SAAT MENGAMBIL DATA SAMPLING */}
+                            {isLoadingSampling && (
+                                <tr>
+                                    <td colSpan="6" className="h-[500px]">
+                                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm text-indigo-600">
+                                            <Loader2 size={40} className="animate-spin mb-4" />
+                                            <p className="font-black animate-pulse">Menyusun Data Sampling...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+
+                            {/* MENGGUNAKAN tableDataToRender ALIH-ALIH filteredTableData */}
+                            {!isLoadingSampling && tableDataToRender.map((item) => {
                                 const getInitials = (name) => {
                                     if (!name) return 'A'; const parts = name.replace(/[^a-zA-Z ]/g, '').trim().split(' ');
                                     return parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0][0].toUpperCase();
                                 };
+                                
                                 return (
                                 <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${selectedReportId === item.id ? 'bg-indigo-50/50' : ''}`}>
                                     <td className="p-4 pl-6">
