@@ -245,7 +245,7 @@ const tableDataToRender = isSamplingMode ? samplingData : filteredTableData;
                         {globalStats.pddiktiValidCount?.toLocaleString('id-ID') || 0}
                     </h3>
                     <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase">
-                        Data Terverifikasi PDDikti dan pengecekan ulang pada data terlacak melalui WhiteBridge.ai API                    </p>
+                        Data Terlacak yang di verifikasi ulang dengan PDDikti+Grok.ai+WhiteBridge.ai</p>
                 </div>
 
                 <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl text-center min-w-[80px]">
@@ -322,7 +322,7 @@ const tableDataToRender = isSamplingMode ? samplingData : filteredTableData;
             </svg>
 
             <span className="text-2xl font-black text-slate-800">
-                {Math.floor(finalValueNum)}
+                {finalValueNum.toFixed(1)}
             </span>
         </div>
 
