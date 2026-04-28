@@ -280,24 +280,7 @@ const tableDataToRender = isSamplingMode ? samplingData : filteredTableData;
             */}
 
             {/* TOMBOL 2: EXPORT EXCEL (Tombol aslimu) */}
-            <button
-                onClick={exportSamplingToSpreadsheet}
-                disabled={isExporting} 
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-                    isExporting 
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
-                    : 'bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                }`}
-            >
-                {isExporting ? (
-                    <span className="animate-pulse">Memproses Data...</span>
-                ) : (
-                    <>
-                        <Download size={14} />
-                        Unduh Sampel Evaluasi (500)
-                    </>
-                )}
-            </button>
+            
         </div>
         </div>
     </div>
